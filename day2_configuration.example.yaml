@@ -6,3 +6,5 @@ configurators:
         bind_dn: <name>
         bind_password: <password>
         idp_name: ldap
+    ingress:
+        domain: <ocp.customer.domain.com>

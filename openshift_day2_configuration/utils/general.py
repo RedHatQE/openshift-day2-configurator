@@ -1,15 +1,26 @@
+import os
 from functools import wraps
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 from logging import Logger
 
-from pyaml_env import parse_config
+from rich import box
+from rich.table import Table
 
-DAY2_CONFIG = parse_config("/home/rnetser/git/openshift-day2-configuration/day2_configuration.yaml")
-DAY2_CONFIGURATORS = DAY2_CONFIG.get("configurators")
+
+class KubeconfigExportedError(Exception):
+    pass
+
+
+class KubeconfigMissingInConfigError(Exception):
+    pass
+
+
+class KubeconfigMissingFileError(Exception):
+    pass
 
 
 def verify_and_execute_configurator(
-    config: Optional[Dict] = None,
+    # config: Optional[Dict] = None,
     config_keys: Optional[List] = None,
     logger: Optional[Logger] = None,
 ) -> Any:
@@ -17,7 +28,7 @@ def verify_and_execute_configurator(
     Decorator to verify and execute configurator.
 
     Args:
-        config (Dict): configuration.
+        # config (Dict): configuration.
         config_keys (List): list of keys that should be in the config.
         logger (Logger): logger to use, if not passed, logs will not be displayed.
 
@@ -29,7 +40,7 @@ def verify_and_execute_configurator(
         @wraps(func)
         def inner(*args, **kwargs):
             try:
-                if config_keys and (missing_keys := [_key for _key in config_keys if _key not in config]):
+                if config_keys and (missing_keys := [_key for _key in config_keys if _key not in args[0].config]):
                     return {"res": False, "err": f"Missing config keys: {missing_keys}"}
 
                 return func(*args, **kwargs)
@@ -41,3 +52,31 @@ def verify_and_execute_configurator(
         return inner
 
     return wrapper
+
+
+def base_table() -> Table:
+    table = Table(
+        title="Cluster Configuration Report",
+        show_lines=True,
+        box=box.ROUNDED,
+        expand=True,
+    )
+    table.add_column("Configurator", style="cyan", no_wrap=True)
+    table.add_column("Configuration", style="magenta")
+    table.add_column("Status", style="green")
+    table.add_column("Failure Reason", style="red")
+
+    return table
+
+
+def verify_and_set_kubeconfig(config):
+    if os.environ.get("KUBECONFIG"):
+        raise KubeconfigExportedError("KUBECONFIG environment variable is set. Please unset it.")
+
+    if not (kubeconfig_path := config.get("kubeconfig")):
+        raise KubeconfigMissingInConfigError("Missing kubeconfig in day2_configuration.yaml")
+
+    if not os.path.exists(kubeconfig_path):
+        raise KubeconfigMissingFileError(f"Kubeconfig {kubeconfig_path} does not exist")
+
+    os.environ["KUBECONFIG"] = kubeconfig_path
