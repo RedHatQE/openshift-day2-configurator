@@ -1,3 +1,13 @@
+[tool.coverage.run]
+omit = ["openshift_day2_configuration/tests/*", "openshift_day2_configuration/cli.py"]
+
+[tool.coverage.report]
+fail_under = 42 # TODO: Need to be at least 60
+skip_empty = true
+
+[tool.coverage.html]
+directory = ".tests_coverage"
+
 [tool.ruff]
 preview = true
 line-length = 120
@@ -6,3 +16,46 @@ output-format = "grouped"
 
 [tool.ruff.format]
 exclude = [".git", ".venv", ".mypy_cache", ".tox", "__pycache__"]
+
+[tool.poetry]
+name = "openshift-day2-configuration"
+version = "0.1.0"
+description = "Tool to configure specific day 2 operations on Openshift"
+authors = ["myakove <myakove@gmail.com>", "rnetser <ruty_n4@gmail.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [{ include = "openshift_day2_configuration" }]
+repository = "https://github.com/RedHatQE/openshift-day2-configuration"
+homepage = "https://github.com/RedHatQE/openshift-day2-configuration"
+documentation = "https://github.com/RedHatQE/openshift-day2-configuration/blob/main/README.md"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+
+[tool.poetry.scripts]
+openshift-cli-installer = "openshift_day2_configuration:main"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pyaml-env = "^1.2.1"
+pyhelper-utils = "^0.0.4"
+python-simple-logger = "^1.0.19"
+openshift-python-wrapper = "^10.0.29"
+rich = "^13.7.1"
+
+
+[tool.poetry.group.dev.dependencies]
+ipdb = "^0.13.13"
+ipython = "*"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+pattern = "((?P<epoch>\\d+)!)?(?P<base>\\d+(\\.\\d+)*)"
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["VERSION"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
