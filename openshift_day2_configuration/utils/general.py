@@ -20,15 +20,19 @@ class KubeconfigMissingFileError(Exception):
 
 
 def verify_and_execute_configurator(
-    # config: Optional[Dict] = None,
     config_keys: Optional[List] = None,
     logger: Optional[Logger] = None,
 ) -> Any:
     """
     Decorator to verify and execute configurator.
 
+    Configuration is verified by checking if all required keys are in the config.
+    Configuration dict is set as `config` class attribute in the underline function.
+
+    Example:
+        @verify_and_execute_configurator(config_keys=["bind_password"], logger=LOGGER)
+
     Args:
-        # config (Dict): configuration.
         config_keys (List): list of keys that should be in the config.
         logger (Logger): logger to use, if not passed, logs will not be displayed.
 

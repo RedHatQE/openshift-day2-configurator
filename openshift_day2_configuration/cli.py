@@ -14,7 +14,6 @@ from openshift_day2_configuration.utils.general import (
     verify_and_set_kubeconfig,
 )
 
-CONFIGURATORS_MAPPING = {"ldap": execute_ldap_configuration}
 LOGGER = get_logger(name="day2-config-cluster")
 
 
@@ -32,6 +31,7 @@ LOGGER = get_logger(name="day2-config-cluster")
     show_default=True,
 )
 def main(**kwargs):
+    configurators_mapping = {"ldap": execute_ldap_configuration}
     config_results = {}
 
     day2_config = parse_config(kwargs["config_file"])
@@ -45,7 +45,7 @@ def main(**kwargs):
 
     with Live(table, refresh_per_second=10):
         for configurator_name, config in day2_configurators.items():
-            if configurator_name not in CONFIGURATORS_MAPPING:
+            if configurator_name not in configurators_mapping:
                 config_results.setdefault("missing_configurators", []).append(configurator_name)
                 table.add_row(
                     configurator_name,
@@ -55,7 +55,7 @@ def main(**kwargs):
                 )
                 continue
 
-            config_results[configurator_name] = config_results = CONFIGURATORS_MAPPING[configurator_name](config=config)
+            config_results[configurator_name] = config_results = configurators_mapping[configurator_name](config=config)
 
             for result_str, result_status in config_results.items():
                 status = "Passed" if result_status["res"] else failed_str
