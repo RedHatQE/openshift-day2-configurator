@@ -9,7 +9,10 @@ from rich import print
 from simple_logger.logger import get_logger
 
 from configurators.ldap import execute_ldap_configuration
-from openshift_day2_configuration.utils.general import base_table, verify_and_set_kubeconfig
+from openshift_day2_configuration.utils.general import (
+    base_table,
+    verify_and_set_kubeconfig,
+)
 
 CONFIGURATORS_MAPPING = {"ldap": execute_ldap_configuration}
 LOGGER = get_logger(name="day2-config-cluster")
@@ -39,16 +42,22 @@ def main(**kwargs):
 
     table = base_table()
     failed_str = "[red]Failed[not red]"
+
     with Live(table, refresh_per_second=10):
         for configurator_name, config in day2_configurators.items():
             if configurator_name not in CONFIGURATORS_MAPPING:
                 config_results.setdefault("missing_configurators", []).append(configurator_name)
-                table.add_row(configurator_name, "", failed_str, "Missing configurator in configuration mapping")
+                table.add_row(
+                    configurator_name,
+                    "",
+                    failed_str,
+                    "Missing configurator in configuration mapping",
+                )
                 continue
 
-            config_results[configurator_name] = CONFIGURATORS_MAPPING[configurator_name](config=config)
+            config_results[configurator_name] = config_results = CONFIGURATORS_MAPPING[configurator_name](config=config)
 
-            for result_str, result_status in config_results[configurator_name].items():
+            for result_str, result_status in config_results.items():
                 status = "Passed" if result_status["res"] else failed_str
                 reason = "" if result_status["res"] else result_status["err"]
                 table.add_row(configurator_name, result_str, status, reason)
