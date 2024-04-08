@@ -1,9 +1,8 @@
-import datetime
 import logging
-import time
 
 import click
 from pyaml_env import parse_config
+from pyhelper_utils.runners import function_runner_with_pdb
 from rich.live import Live
 from rich import print
 from simple_logger.logger import get_logger
@@ -15,31 +14,42 @@ from openshift_day2_configuration.utils.general import (
     verify_and_set_kubeconfig,
 )
 
-LOGGER = get_logger(name="day2-config-cluster")
+LOGGER = get_logger(name="day2-config-cluster", level=logging.NOTSET)
 
 
 @click.command("configurator")
 @click.option(
     "--config-file",
     required=True,
-    help="Path to day2 configuration.yaml",
     type=click.Path(exists=True),
+    help="Path to day2 configuration.yaml",
 )
 @click.option(
     "--pdb",
-    help="Drop to `ipdb` shell on exception",
     is_flag=True,
     show_default=True,
+    help="Drop to `ipdb` shell on exception",
 )
 @click.option(
     "--non-live-output",
     default=False,
-    help="Do not print live output to console as configuration is progressing",
     is_flag=True,
     show_default=True,
     type=click.BOOL,
+    help="""\b
+Do not print live output to console as configuration is progressing""",
+)
+@click.option(
+    "--log-level",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False),
+    help="""\b
+Sets log level; if not passed, logs will be silenced
+""",
 )
 def main(**kwargs):
+    if log_level := kwargs.get("log_level"):
+        LOGGER.setLevel(log_level)
+
     configurators_mapping = {"ldap": execute_ldap_configuration}
 
     day2_config = parse_config(kwargs["config_file"])
@@ -73,28 +83,4 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
-    start_time = time.time()
-    should_raise = False
-    _logger = get_logger(name="openshift-day2-configuration")
-    # TODO: organize logging and time prints
-    logging.disable(logging.CRITICAL)
-
-    try:
-        main()
-    except Exception as ex:
-        import sys
-        import traceback
-
-        ipdb = __import__("ipdb")  # Bypass debug-statements pre-commit hook
-
-        if "--pdb" in sys.argv:
-            extype, value, tb = sys.exc_info()
-            traceback.print_exc()
-            ipdb.post_mortem(tb)
-        else:
-            _logger.error(ex)
-            should_raise = True
-    finally:
-        _logger.info(f"Total execution time: {datetime.timedelta(seconds=time.time() - start_time)}")
-        if should_raise:
-            sys.exit(1)
+    function_runner_with_pdb(func=main)

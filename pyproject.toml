@@ -39,10 +39,11 @@ openshift-cli-installer = "openshift_day2_configuration:main"
 [tool.poetry.dependencies]
 python = "^3.8"
 pyaml-env = "^1.2.1"
-pyhelper-utils = "^0.0.4"
 python-simple-logger = "^1.0.19"
 openshift-python-wrapper = "^10.0.29"
 rich = "^13.7.1"
+pyhelper-utils = "^0.0.6"
+click = "^8.1.7"
 
 
 [tool.poetry.group.dev.dependencies]
