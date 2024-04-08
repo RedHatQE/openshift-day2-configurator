@@ -1,29 +1,23 @@
 import logging
 
 import click
-from pyaml_env import parse_config
 from pyhelper_utils.runners import function_runner_with_pdb
-from rich.live import Live
 from rich import print
+from rich.progress import Progress
 from simple_logger.logger import get_logger
 
 from configurators.ldap import execute_ldap_configuration
 from openshift_day2_configuration.utils.general import (
+    DAY2_CONFIG,
+    DAY2_CONFIGURATORS,
     base_table,
     execute_configurators,
-    verify_and_set_kubeconfig,
 )
 
-LOGGER = get_logger(name="day2-config-cluster", level=logging.NOTSET)
+LOGGER = get_logger(name="day2-config-cluster")
 
 
 @click.command("configurator")
-@click.option(
-    "--config-file",
-    required=True,
-    type=click.Path(exists=True),
-    help="Path to day2 configuration.yaml",
-)
 @click.option(
     "--pdb",
     is_flag=True,
@@ -31,53 +25,41 @@ LOGGER = get_logger(name="day2-config-cluster", level=logging.NOTSET)
     help="Drop to `ipdb` shell on exception",
 )
 @click.option(
-    "--non-live-output",
-    default=False,
+    "--verbose",
+    "-v",
     is_flag=True,
     show_default=True,
-    type=click.BOOL,
-    help="""\b
-Do not print live output to console as configuration is progressing""",
+    help="Enable verbose logging; if not passed, logging will be disabled",
 )
-@click.option(
-    "--log-level",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False),
-    help="""\b
-Sets log level; if not passed, logs will be silenced
-""",
-)
-def main(**kwargs):
-    if log_level := kwargs.get("log_level"):
-        LOGGER.setLevel(log_level)
+def main(verbose, pdb):
+    if verbose:
+        LOGGER.setLevel(logging.DEBUG)
+    else:
+        logging.disable(logging.CRITICAL)
 
     configurators_mapping = {"ldap": execute_ldap_configuration}
 
-    day2_config = parse_config(kwargs["config_file"])
-    verify_and_set_kubeconfig(config=day2_config)
-
-    if not (day2_configurators := day2_config.get("configurators")):
-        raise ValueError("Missing configurators in day2_configuration.yaml")
-
     table = base_table()
+    execute_configurators_kwargs = {
+        "configurators_mapping": configurators_mapping,
+        "table": table,
+    }
 
-    if kwargs.get("non_live_output"):
-        table = execute_configurators(
-            configurators_mapping=configurators_mapping,
-            day2_configurators=day2_configurators,
-            table=table,
-        )
-
-        print(table)
-
+    if pdb or verbose:
+        table = execute_configurators(**execute_configurators_kwargs)
     else:
-        with Live(table, refresh_per_second=10):
+        with Progress() as progress:
+            task_progress = 1
+            task = progress.add_task(
+                "[green]Executing Day2 configurations ", total=len(DAY2_CONFIGURATORS) + task_progress
+            )
             table = execute_configurators(
-                configurators_mapping=configurators_mapping,
-                day2_configurators=day2_configurators,
-                table=table,
+                progress=progress, task=task, task_progress=task_progress, **execute_configurators_kwargs
             )
 
-    if output_file := day2_config.get("output_log_file"):
+    print(table)
+
+    if output_file := DAY2_CONFIG.get("output_log_file"):
         with open(output_file, "w") as output_file:
             print(table, file=output_file)
 
