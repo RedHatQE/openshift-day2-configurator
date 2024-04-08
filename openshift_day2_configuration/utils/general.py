@@ -87,12 +87,10 @@ def verify_and_set_kubeconfig(config: Dict) -> None:
 
 
 def execute_configurators(configurators_mapping: Dict, day2_configurators: Dict, table: Table) -> Table:
-    config_results = {}
     failed_str = "[red]Failed[not red]"
 
     for configurator_name, config in day2_configurators.items():
         if configurator_name not in configurators_mapping:
-            config_results.setdefault("missing_configurators", []).append(configurator_name)
             table.add_row(
                 configurator_name,
                 "",
@@ -101,9 +99,7 @@ def execute_configurators(configurators_mapping: Dict, day2_configurators: Dict,
             )
             continue
 
-        config_results[configurator_name] = config_results = configurators_mapping[configurator_name](config=config)
-
-        for result_str, result_status in config_results.items():
+        for result_str, result_status in configurators_mapping[configurator_name](config=config).items():
             status = "Passed" if result_status["res"] else failed_str
             reason = "" if result_status["res"] else result_status["err"]
             table.add_row(configurator_name, result_str, status, reason)
