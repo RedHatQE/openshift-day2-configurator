@@ -11,6 +11,7 @@ from simple_logger.logger import get_logger
 from configurators.ldap import execute_ldap_configuration
 from openshift_day2_configuration.utils.general import (
     base_table,
+    execute_configurators,
     verify_and_set_kubeconfig,
 )
 
@@ -30,9 +31,16 @@ LOGGER = get_logger(name="day2-config-cluster")
     is_flag=True,
     show_default=True,
 )
+@click.option(
+    "--non-live-output",
+    default=False,
+    help="Do not print live output to console as configuration is progressing",
+    is_flag=True,
+    show_default=True,
+    type=click.BOOL,
+)
 def main(**kwargs):
     configurators_mapping = {"ldap": execute_ldap_configuration}
-    config_results = {}
 
     day2_config = parse_config(kwargs["config_file"])
     verify_and_set_kubeconfig(config=day2_config)
@@ -41,26 +49,22 @@ def main(**kwargs):
         raise ValueError("Missing configurators in day2_configuration.yaml")
 
     table = base_table()
-    failed_str = "[red]Failed[not red]"
 
-    with Live(table, refresh_per_second=10):
-        for configurator_name, config in day2_configurators.items():
-            if configurator_name not in configurators_mapping:
-                config_results.setdefault("missing_configurators", []).append(configurator_name)
-                table.add_row(
-                    configurator_name,
-                    "",
-                    failed_str,
-                    "Missing configurator in configuration mapping",
-                )
-                continue
+    if kwargs.get("non_live_output"):
+        table = execute_configurators(
+            configurators_mapping=configurators_mapping,
+            day2_configurators=day2_configurators,
+            table=table,
+        )
+        print(table)
 
-            config_results[configurator_name] = config_results = configurators_mapping[configurator_name](config=config)
-
-            for result_str, result_status in config_results.items():
-                status = "Passed" if result_status["res"] else failed_str
-                reason = "" if result_status["res"] else result_status["err"]
-                table.add_row(configurator_name, result_str, status, reason)
+    else:
+        with Live(table, refresh_per_second=10):
+            table = execute_configurators(
+                configurators_mapping=configurators_mapping,
+                day2_configurators=day2_configurators,
+                table=table,
+            )
 
     if output_file := day2_config.get("output_log_file"):
         with open(output_file, "w") as output_file:
