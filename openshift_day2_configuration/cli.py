@@ -56,6 +56,7 @@ def main(**kwargs):
             day2_configurators=day2_configurators,
             table=table,
         )
+
         print(table)
 
     else:

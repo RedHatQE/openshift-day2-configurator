@@ -3,7 +3,7 @@ output_log_file: /tmp/openshift-day2-configuration.log
 
 configurators:
     ldap:
-        bind_dn: <name>
+        bind_dn_name: <name>
         bind_password: <password>
         idp_name: ldap
     ingress:

@@ -2,6 +2,7 @@ import shlex
 from typing import Dict
 
 from ocp_resources.cluster_role_binding import ClusterRoleBinding
+from ocp_resources.oauth import OAuth
 from ocp_resources.resource import ResourceEditor
 from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
@@ -27,14 +28,47 @@ class LdapConfigurator:
         return {"res": res, "err": err}
 
     @verify_and_execute_configurator(config_keys=["idp_name", "bind_password"], logger=LOGGER)
-    def create_oath(self, idp_name: str, bind_password: str):
-        pass
+    def update_cluster_oath(self, bind_dn_name: str, bind_password: str, url: str) -> Dict:
+        cluster_oath = OAuth(name="cluster")
+
+        if not cluster_oath.exists:
+            LOGGER.error(f"Cluster OAuth {cluster_oath.name} does not exist")
+            return {
+                "res": False,
+                "err": f"Cluster OAuth {cluster_oath.name} does not exist",
+            }
+
+        oath_dict = {
+            "identityProviders": [
+                {
+                    "name": "ldapidp",
+                    "mappingMethod": "claim",
+                    "type": "LDAP",
+                    "ldap": {
+                        "attributes": {
+                            "id": ["dn"],
+                            "email": ["mail"],
+                            "name": ["cn"],
+                            "preferredUsername": ["sAMAccountName"],
+                        },
+                        "bindDN": bind_dn_name,
+                        "bindPassword": bind_password,
+                        "insecure": True,
+                        "url": url,
+                    },
+                }
+            ]
+        }
+        ResourceEditor({cluster_oath: {"spec": {oath_dict}}}).update()
+
+        return {"res": True, "err": None}
 
     def disable_self_provisioners(self) -> Dict:
         self_provisioner_rb = ClusterRoleBinding(name="self-provisioner")
 
         status_dict = {}
 
+        # TODO: YP - this rolebinding does not exist (tested on AWS-IPI and HCP)
         if self_provisioner_rb.exists:
             status_dict["Set role binding subjects to null"] = self.set_role_binding_subjects_null(
                 self_provisioner_rb=self_provisioner_rb
@@ -49,7 +83,7 @@ class LdapConfigurator:
             self_provisioner_rb=self_provisioner_rb
         )
 
-        # TODO: check if the order matters or this action can be moved under the first resource.exists check
+        # TODO - YP: check if the order matters or this action can be moved under the first resource.exists check
         if self_provisioner_rb.exists:
             status_dict["Set role binding autoupdate"] = self.set_role_binding_autoupdate_false(
                 self_provisioner_rb=self_provisioner_rb
@@ -69,7 +103,8 @@ class LdapConfigurator:
     @verify_and_execute_configurator(logger=LOGGER)
     def remove_role_binding_from_group(self, self_provisioner_rb: ClusterRoleBinding) -> Dict:
         LOGGER.debug(f"Remove role binding {self_provisioner_rb.name} from group system:authenticated:oauth")
-        #  Warning: Your changes may get lost whenever a master is restarted, unless you prevent reconciliation of this rolebinding using the following command:
+        # TODO - YP: the following warning when running the command in the doc:
+        # Warning: Your changes may get lost whenever a master is restarted, unless you prevent reconciliation of this rolebinding using the following command:
         # oc amd comment in cli: oc annotate clusterrolebinding.rbac self-provisioners 'rbac.authorization.kubernetes.io/autoupdate=false' --overwrite --local
         cmd = shlex.split(
             f"oc adm policy remove-cluster-role-from-group {self_provisioner_rb.name} system:authenticated:oauth"
@@ -89,13 +124,19 @@ class LdapConfigurator:
 def execute_ldap_configuration(config: Dict) -> Dict:
     LOGGER.info("Configuring LDAP")
 
+    ldap_configurator = LdapConfigurator(config=config)
+
     status_dict = {
-        "Create LDAP secret": LdapConfigurator(config=config).create_ldap_secret(
+        "Create LDAP secret": ldap_configurator.create_ldap_secret(
             bind_password=config.get("bind_password"),
+        ),
+        "Create OAuth": ldap_configurator.update_cluster_oath(
+            bind_dn_name=config.get("bind_dn_name"), bind_password=config.get("bind_password"), url=config.get("url")
         ),
     }
 
-    # create_oath(idp_name=config["idp_name"], bind_password=config["bind_password"])
-    status_dict.update(LdapConfigurator(config=config).disable_self_provisioners())
+    status_dict.update(ldap_configurator.disable_self_provisioners())
+
+    # TODO: Configure LDAP Groups with Active Directory section
 
     return status_dict
