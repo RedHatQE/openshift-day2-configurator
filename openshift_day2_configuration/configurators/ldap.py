@@ -104,8 +104,10 @@ class LdapConfigurator:
     def remove_role_binding_from_group(self, self_provisioner_rb: ClusterRoleBinding) -> Dict:
         LOGGER.debug(f"Remove role binding {self_provisioner_rb.name} from group system:authenticated:oauth")
         # TODO - YP: the following warning when running the command in the doc:
-        # Warning: Your changes may get lost whenever a master is restarted, unless you prevent reconciliation of this rolebinding using the following command:
-        # oc amd comment in cli: oc annotate clusterrolebinding.rbac self-provisioners 'rbac.authorization.kubernetes.io/autoupdate=false' --overwrite --local
+        # Warning: Your changes may get lost whenever a master is restarted,
+        # unless you prevent reconciliation of this rolebinding using the following command:
+        # oc amd comment in cli: oc annotate clusterrolebinding.rbac self-provisioners
+        # 'rbac.authorization.kubernetes.io/autoupdate=false' --overwrite --local
         cmd = shlex.split(
             f"oc adm policy remove-cluster-role-from-group {self_provisioner_rb.name} system:authenticated:oauth"
         )

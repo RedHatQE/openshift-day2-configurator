@@ -1,5 +1,5 @@
 [tool.coverage.run]
-omit = ["openshift_day2_configuration/tests/*", "openshift_day2_configuration/cli.py"]
+omit = ["openshift_day2_configuration/cli.py"]
 
 [tool.coverage.report]
 fail_under = 42 # TODO: Need to be at least 60
@@ -48,6 +48,12 @@ rich = "^13.7.1"
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
 ipython = "*"
+
+
+[tool.poetry.group.tests.dependencies]
+pytest-cov = "^5.0.0"
+pytest-mock = "^3.14.0"
+pytest = "^8.1.1"
 
 [tool.poetry-dynamic-versioning]
 enable = true

@@ -44,6 +44,7 @@ def verify_and_execute_configurator(
         @wraps(func)
         def inner(*args, **kwargs):
             try:
+                print(args)
                 if config_keys and (missing_keys := [_key for _key in config_keys if _key not in args[0].config]):
                     return {"res": False, "err": f"Missing config keys: {missing_keys}"}
 
@@ -66,7 +67,7 @@ def base_table() -> Table:
         expand=True,
     )
     table.add_column("Configurator", style="cyan", no_wrap=True)
-    table.add_column("Configuration", style="magenta")
+    table.add_column("Step", style="magenta")
     table.add_column("Status", style="green")
     table.add_column("Failure Reason", style="red")
 
