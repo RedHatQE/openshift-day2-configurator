@@ -1,8 +1,8 @@
 import os
+import sys
 from functools import wraps
 from typing import Any, Dict, List, Optional
 
-import click
 from ocp_utilities.infra import get_client
 from pyaml_env import parse_config
 from rich import box
@@ -29,15 +29,15 @@ class KubeconfigMissingFileError(Exception):
 def verify_and_set_kubeconfig(config: Dict) -> None:
     if os.environ.get("KUBECONFIG"):
         LOGGER.error("KUBECONFIG environment variable is set. Please unset it.")
-        raise click.Abort()
+        sys.exit(1)
 
     if not (kubeconfig_path := config.get("kubeconfig")):
         LOGGER.error("Missing kubeconfig in day2 configuration yaml")
-        raise click.Abort()
+        sys.exit(1)
 
     if not os.path.exists(kubeconfig_path):
         LOGGER.error(f"Kubeconfig {kubeconfig_path} does not exist")
-        raise click.Abort()
+        sys.exit(1)
 
     os.environ["KUBECONFIG"] = kubeconfig_path
 
@@ -46,7 +46,7 @@ def verify_and_set_kubeconfig(config: Dict) -> None:
 
     except Exception as ex:
         LOGGER.error(f"Cannot access cluster with kubeconfig {kubeconfig_path}, {ex}")
-        raise click.Abort()
+        sys.exit(1)
 
 
 def get_day2_configs():
@@ -54,13 +54,13 @@ def get_day2_configs():
 
     if not os.path.exists(day2_config):
         LOGGER.error(f"Openshift Day2 config {day2_config} file does not exist")
-        raise click.Abort()
+        sys.exit(1)
 
     day2_config = parse_config(day2_config)
 
     if not (day2_configurators := day2_config.get("configurators")):
         LOGGER.error("Missing configurators in day2 configuration yaml")
-        raise click.Abort()
+        sys.exit(1)
 
     verify_and_set_kubeconfig(config=day2_config)
 
