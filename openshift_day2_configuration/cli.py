@@ -1,10 +1,7 @@
-import logging
-
 import click
 from pyhelper_utils.runners import function_runner_with_pdb
 from rich import print
 from rich.progress import Progress
-from simple_logger.logger import get_logger
 
 from configurators.ldap import execute_ldap_configuration
 from openshift_day2_configuration.utils.general import (
@@ -12,9 +9,10 @@ from openshift_day2_configuration.utils.general import (
     DAY2_CONFIGURATORS,
     base_table,
     execute_configurators,
+    set_logger,
 )
 
-LOGGER = get_logger(name="day2-config-cluster")
+LOGGER = set_logger(name="day2-config-cluster")
 
 
 @click.command("configurator")
@@ -24,19 +22,7 @@ LOGGER = get_logger(name="day2-config-cluster")
     show_default=True,
     help="Drop to `ipdb` shell on exception",
 )
-@click.option(
-    "--verbose",
-    "-v",
-    is_flag=True,
-    show_default=True,
-    help="Enable verbose logging; if not passed, logging will be disabled",
-)
-def main(verbose, pdb):
-    if verbose:
-        LOGGER.setLevel(logging.DEBUG)
-    else:
-        logging.disable(logging.INFO)
-
+def main(pdb):
     configurators_mapping = {"ldap": execute_ldap_configuration}
 
     table = base_table()
@@ -45,7 +31,7 @@ def main(verbose, pdb):
         "table": table,
     }
 
-    if pdb or verbose:
+    if pdb:
         table = execute_configurators(**execute_configurators_kwargs)
     else:
         with Progress() as progress:

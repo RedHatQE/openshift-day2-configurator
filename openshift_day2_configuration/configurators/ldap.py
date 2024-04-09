@@ -5,14 +5,14 @@ from ocp_resources.cluster_role_binding import ClusterRoleBinding
 from ocp_resources.oauth import OAuth
 from ocp_resources.resource import ResourceEditor
 from pyhelper_utils.shell import run_command
-from simple_logger.logger import get_logger
 
 from openshift_day2_configuration.utils.general import (
     DAY2_CONFIGURATORS,
+    set_logger,
     verify_and_execute_configurator,
 )
 
-LOGGER = get_logger(name="ldap-config")
+LOGGER = set_logger(name="ldap-config")
 LDAP_CONFIG = DAY2_CONFIGURATORS.get("ldap")
 
 
@@ -125,7 +125,7 @@ def set_role_binding_subjects_null(self_provisioner_rb: ClusterRoleBinding) -> D
 
 
 def execute_ldap_configuration(config: Dict) -> Dict:
-    LOGGER.info("Configuring LDAP")
+    LOGGER.debug("Configuring LDAP")
 
     status_dict = {
         "Create LDAP secret": create_ldap_secret(

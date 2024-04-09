@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 from functools import wraps
@@ -9,9 +10,6 @@ from rich import box
 from rich.progress import Progress, TaskID
 from rich.table import Table
 from simple_logger.logger import get_logger
-
-
-LOGGER = get_logger(__name__)
 
 
 class KubeconfigExportedError(Exception):
@@ -26,27 +24,39 @@ class KubeconfigMissingFileError(Exception):
     pass
 
 
+def set_logger(name):
+    logger = get_logger(name=name)
+    logger.setLevel(os.getenv("OCP_DAY2_LOG_LEVEL", "INFO"))
+    logging.disable(logging.INFO)
+
+    return logger
+
+
+LOGGER = set_logger(name="general")
+
+
 def verify_and_set_kubeconfig(config: Dict) -> None:
     if os.environ.get("KUBECONFIG"):
         LOGGER.error("KUBECONFIG environment variable is set. Please unset it.")
-        sys.exit(1)
+        sys.exit(3)
 
     if not (kubeconfig_path := config.get("kubeconfig")):
         LOGGER.error("Missing kubeconfig in day2 configuration yaml")
-        sys.exit(1)
+        sys.exit(4)
 
     if not os.path.exists(kubeconfig_path):
         LOGGER.error(f"Kubeconfig {kubeconfig_path} does not exist")
-        sys.exit(1)
+        sys.exit(5)
 
     os.environ["KUBECONFIG"] = kubeconfig_path
 
     try:
-        get_client()
+        get_client().resources.api_groups
 
     except Exception as ex:
-        LOGGER.error(f"Cannot access cluster with kubeconfig {kubeconfig_path}, {ex}")
-        sys.exit(1)
+        LOGGER.error(f"Cannot access cluster with kubeconfig {kubeconfig_path}")
+        LOGGER.debug(ex, exc_info=True)
+        sys.exit(6)
 
 
 def get_day2_configs():
@@ -60,7 +70,7 @@ def get_day2_configs():
 
     if not (day2_configurators := day2_config.get("configurators")):
         LOGGER.error("Missing configurators in day2 configuration yaml")
-        sys.exit(1)
+        sys.exit(2)
 
     verify_and_set_kubeconfig(config=day2_config)
 
@@ -73,7 +83,7 @@ DAY2_CONFIG, DAY2_CONFIGURATORS = get_day2_configs()
 def verify_and_execute_configurator(
     config: Optional[Dict] = None,
     config_keys: Optional[List] = None,
-    logger: Optional[LOGGER] = None,
+    logger: Optional[logging.Logger] = None,
 ) -> Any:
     """
     Decorator to verify and execute configurator.
