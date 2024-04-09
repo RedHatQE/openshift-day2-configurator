@@ -2,12 +2,12 @@ import logging
 import os
 from typing import Callable, Dict, Optional
 
+from pyhelper_utils.runners import sys
 from rich import box
 from rich.progress import Progress, TaskID
 from rich.table import Table
 from simple_logger.logger import get_logger
 
-from openshift_day2_configuration.configuration.configurations import get_day2_configs
 from openshift_day2_configuration.configurators.mappings import configurators_mappings
 
 
@@ -65,14 +65,15 @@ def base_table() -> Table:
 
 
 def execute_configurators(
+    day2_configurators: Dict,
     table: Table,
+    logger: logging.Logger,
     progress: Optional[Progress] = None,
     task: Optional[TaskID] = None,
     task_progress: Optional[int] = None,
 ) -> Table:
     failed_str = "[red]Failed[not red]"
     _configurators_mappings = configurators_mappings()
-    _, day2_configurators = get_day2_configs()
 
     for configurator_name, config in day2_configurators.items():
         if configurator_name not in _configurators_mappings:
@@ -86,6 +87,10 @@ def execute_configurators(
 
         for result_str, result_status in _configurators_mappings[configurator_name](config=config).items():
             if progress:
+                if not task:
+                    logger.debug("task not set")
+                    sys.exit(1)
+
                 progress.update(task, advance=task_progress, refresh=True)
 
             status = "Passed" if result_status["res"] else failed_str

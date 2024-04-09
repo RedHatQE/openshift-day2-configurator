@@ -119,17 +119,18 @@ def set_role_binding_subjects_null(self_provisioner_rb: ClusterRoleBinding, logg
 
 def execute_ldap_configuration(config: Dict, logger: logging.Logger) -> Dict:
     logger.debug("Configuring LDAP")
+    ldap_config = config["ldap"]
 
     status_dict = {
         "Create LDAP secret": verify_and_execute_configurator(
             func=create_ldap_secret,
-            config=config,
+            config=ldap_config,
             logger_obj=logger,
             bind_password="bind_password",  # pragma: allowlist secret
         ),
         "Create OAuth": verify_and_execute_configurator(
             func=update_cluster_oath,
-            config=config,
+            config=ldap_config,
             logger_obj=logger,
             bind_dn_name="bind_dn_name",
             bind_password="bind_password",  # pragma: allowlist secret
@@ -137,7 +138,7 @@ def execute_ldap_configuration(config: Dict, logger: logging.Logger) -> Dict:
         ),
     }
 
-    status_dict.update(disable_self_provisioners())
+    status_dict.update(disable_self_provisioners(logger=logger))
 
     # TODO: Configure LDAP Groups with Active Directory section
 

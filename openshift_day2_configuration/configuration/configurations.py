@@ -8,6 +8,22 @@ from simple_logger.logger import get_logger
 LOGGER = get_logger("configurations")
 
 
+def get_day2_configs(config_file):
+    if not os.path.exists(config_file):
+        LOGGER.error(f"Openshift Day2 config {config_file} file does not exist")
+        sys.exit(1)
+
+    day2_config = parse_config(config_file)
+
+    if not (day2_configurators := day2_config.get("configurators")):
+        LOGGER.error("Missing configurators in day2 configuration yaml")
+        sys.exit(2)
+
+    verify_and_set_kubeconfig(config=day2_config)
+
+    return day2_config, day2_configurators
+
+
 def verify_and_set_kubeconfig(config: Dict) -> None:
     if os.environ.get("KUBECONFIG"):
         LOGGER.error("KUBECONFIG environment variable is set. Please unset it.")
@@ -30,24 +46,3 @@ def verify_and_set_kubeconfig(config: Dict) -> None:
         LOGGER.error(f"Cannot access cluster with kubeconfig {kubeconfig_path}")
         LOGGER.debug(ex, exc_info=True)
         sys.exit(6)
-
-
-def get_day2_configs():
-    day2_config = os.getenv(
-        "OPENSHIFT_DAY2_CONFIG",
-        os.path.expanduser("~/.config/openshift-day2/config.yaml"),
-    )
-
-    if not os.path.exists(day2_config):
-        LOGGER.error(f"Openshift Day2 config {day2_config} file does not exist")
-        sys.exit(1)
-
-    day2_config = parse_config(day2_config)
-
-    if not (day2_configurators := day2_config.get("configurators")):
-        LOGGER.error("Missing configurators in day2 configuration yaml")
-        sys.exit(2)
-
-    verify_and_set_kubeconfig(config=day2_config)
-
-    return day2_config, day2_configurators

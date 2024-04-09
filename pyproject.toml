@@ -5,7 +5,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 47   # TODO: Need to be at least 60
+fail_under = 65   # TODO: Need to be at least 60
 skip_empty = true
 
 [tool.coverage.html]
