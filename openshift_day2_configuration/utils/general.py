@@ -1,15 +1,14 @@
 import logging
 import os
-import sys
-from functools import wraps
-from typing import Any, Dict, List, Optional
+from typing import Callable, Dict, Optional
 
-from ocp_utilities.infra import get_client
-from pyaml_env import parse_config
 from rich import box
 from rich.progress import Progress, TaskID
 from rich.table import Table
 from simple_logger.logger import get_logger
+
+from openshift_day2_configuration.configuration.configurations import get_day2_configs
+from openshift_day2_configuration.configurators.mappings import configurators_mappings
 
 
 class KubeconfigExportedError(Exception):
@@ -32,90 +31,22 @@ def set_logger(name):
     return logger
 
 
-LOGGER = set_logger(name="general")
-
-
-def verify_and_set_kubeconfig(config: Dict) -> None:
-    if os.environ.get("KUBECONFIG"):
-        LOGGER.error("KUBECONFIG environment variable is set. Please unset it.")
-        sys.exit(3)
-
-    if not (kubeconfig_path := config.get("kubeconfig")):
-        LOGGER.error("Missing kubeconfig in day2 configuration yaml")
-        sys.exit(4)
-
-    if not os.path.exists(kubeconfig_path):
-        LOGGER.error(f"Kubeconfig {kubeconfig_path} does not exist")
-        sys.exit(5)
-
-    os.environ["KUBECONFIG"] = kubeconfig_path
-
-    try:
-        get_client().resources.api_groups
-
-    except Exception as ex:
-        LOGGER.error(f"Cannot access cluster with kubeconfig {kubeconfig_path}")
-        LOGGER.debug(ex, exc_info=True)
-        sys.exit(6)
-
-
-def get_day2_configs():
-    day2_config = os.getenv(
-        "OPENSHIFT_DAY2_CONFIG",
-        os.path.expanduser("~/.config/openshift-day2/config.yaml"),
-    )
-
-    if not os.path.exists(day2_config):
-        LOGGER.error(f"Openshift Day2 config {day2_config} file does not exist")
-        sys.exit(1)
-
-    day2_config = parse_config(day2_config)
-
-    if not (day2_configurators := day2_config.get("configurators")):
-        LOGGER.error("Missing configurators in day2 configuration yaml")
-        sys.exit(2)
-
-    verify_and_set_kubeconfig(config=day2_config)
-
-    return day2_config, day2_configurators
-
-
-DAY2_CONFIG, DAY2_CONFIGURATORS = get_day2_configs()
-
-
 def verify_and_execute_configurator(
+    func: Callable,
     config: Optional[Dict] = None,
-    config_keys: Optional[List] = None,
-    logger: Optional[logging.Logger] = None,
-) -> Any:
-    """
-    Decorator to verify and execute configurator.
+    logger_obj: Optional[logging.Logger] = None,
+    *args,
+    **kwargs,
+) -> Dict:
+    try:
+        if kwargs and config and (missing_keys := [_key for _key in kwargs if _key not in config]):
+            return {"res": False, "err": f"Missing config keys: {missing_keys}"}
 
-    Args:
-        config (Dict): configuration dict.
-        config_keys (List): list of keys that should be in the config.
-        logger (Logger): logger to use, if not passed, logs will not be displayed.
-
-    Returns:
-        Any: the underline function return value.
-    """
-
-    def wrapper(func):
-        @wraps(func)
-        def inner(*args, **kwargs):
-            try:
-                if config_keys and (missing_keys := [_key for _key in config_keys if _key not in config]):
-                    return {"res": False, "err": f"Missing config keys: {missing_keys}"}
-
-                return func(*args, **kwargs)
-            except Exception as ex:
-                if logger:
-                    logger.info(ex)
-                return {"res": False, "err": str(ex)}
-
-        return inner
-
-    return wrapper
+        return func(*args, **kwargs)
+    except Exception as ex:
+        if logger_obj:
+            logger_obj.info(ex)
+        return {"res": False, "err": str(ex)}
 
 
 def base_table() -> Table:
@@ -134,16 +65,17 @@ def base_table() -> Table:
 
 
 def execute_configurators(
-    configurators_mapping: Dict,
     table: Table,
     progress: Optional[Progress] = None,
     task: Optional[TaskID] = None,
     task_progress: Optional[int] = None,
 ) -> Table:
     failed_str = "[red]Failed[not red]"
+    _configurators_mappings = configurators_mappings()
+    _, day2_configurators = get_day2_configs()
 
-    for configurator_name, config in DAY2_CONFIGURATORS.items():
-        if configurator_name not in configurators_mapping:
+    for configurator_name, config in day2_configurators.items():
+        if configurator_name not in _configurators_mappings:
             table.add_row(
                 configurator_name,
                 "",
@@ -152,7 +84,7 @@ def execute_configurators(
             )
             continue
 
-        for result_str, result_status in configurators_mapping[configurator_name](config=config).items():
+        for result_str, result_status in _configurators_mappings[configurator_name](config=config).items():
             if progress:
                 progress.update(task, advance=task_progress, refresh=True)
 
