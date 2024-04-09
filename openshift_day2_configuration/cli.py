@@ -50,11 +50,12 @@ def openshift_day2_configuration_executor(config_file: str, pdb: bool, verbose: 
             print(table, file=output_file)
 
 
-@click.command("configurator")
+@click.command("openshift-day2-configurator")
 @click.option(
+    "-c",
     "--config-file",
     default=os.environ.get("OPENSHIFT_DAY2_CONFIG"),
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, resolve_path=True),
     show_default=True,
     help="openshift day2 configurator config file",
 )

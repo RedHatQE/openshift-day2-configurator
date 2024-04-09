@@ -37,7 +37,7 @@ classifiers = [
 ]
 
 [tool.poetry.scripts]
-openshift-cli-installer = "openshift_day2_configuration:main"
+openshift-day2-configurator = "openshift_day2_configuration:cli_entrypoint"
 
 [tool.poetry.dependencies]
 python = "^3.8"

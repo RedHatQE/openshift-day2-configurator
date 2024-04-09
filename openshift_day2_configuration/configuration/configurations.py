@@ -9,7 +9,7 @@ LOGGER = get_logger("configurations")
 
 
 def get_day2_configs(config_file):
-    if not os.path.exists(config_file):
+    if not config_file or not os.path.exists(config_file):
         LOGGER.error(f"Openshift Day2 config {config_file} file does not exist")
         sys.exit(1)
 
