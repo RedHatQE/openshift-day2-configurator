@@ -1,6 +1,8 @@
 import os
 import sys
-from typing import Dict
+from typing import Dict, List
+
+from click import Path
 from ocp_utilities.infra import get_client
 from pyaml_env import parse_config
 from simple_logger.logger import get_logger
@@ -32,17 +34,8 @@ def verify_and_set_kubeconfig(config: Dict) -> None:
         sys.exit(6)
 
 
-def get_day2_configs():
-    day2_config = os.getenv(
-        "OPENSHIFT_DAY2_CONFIG",
-        os.path.expanduser("~/.config/openshift-day2/config.yaml"),
-    )
-
-    if not os.path.exists(day2_config):
-        LOGGER.error(f"Openshift Day2 config {day2_config} file does not exist")
-        sys.exit(1)
-
-    day2_config = parse_config(day2_config)
+def get_day2_configs(config_file_path: Path) -> (Dict, List[str]):
+    day2_config = parse_config(config_file_path)
 
     if not (day2_configurators := day2_config.get("configurators")):
         LOGGER.error("Missing configurators in day2 configuration yaml")

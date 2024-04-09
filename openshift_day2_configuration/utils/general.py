@@ -11,18 +11,6 @@ from openshift_day2_configuration.configuration.configurations import get_day2_c
 from openshift_day2_configuration.configurators.mappings import configurators_mappings
 
 
-class KubeconfigExportedError(Exception):
-    pass
-
-
-class KubeconfigMissingInConfigError(Exception):
-    pass
-
-
-class KubeconfigMissingFileError(Exception):
-    pass
-
-
 def set_logger(name):
     logger = get_logger(name=name)
     logger.setLevel(os.getenv("OCP_DAY2_LOG_LEVEL", "INFO"))

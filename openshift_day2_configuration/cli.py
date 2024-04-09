@@ -16,24 +16,23 @@ LOGGER = set_logger(name="day2-config-cluster")
 
 @click.command("configurator")
 @click.option(
+    "--config-file-path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to day2 configuration.yaml",
+)
+@click.option(
     "--pdb",
     is_flag=True,
     show_default=True,
     help="Drop to `ipdb` shell on exception",
 )
-@click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    show_default=True,
-    help="Enable debug logging, if not set no logs will be printed",
-)
-def main(pdb):
+def main(config_file_path, pdb):
     table = base_table()
     execute_configurators_kwargs = {
         "table": table,
     }
-    day2_config, day2_configurators = get_day2_configs()
+    day2_config, day2_configurators = get_day2_configs(config_file_path=config_file_path)
 
     if pdb:
         table = execute_configurators(**execute_configurators_kwargs)
