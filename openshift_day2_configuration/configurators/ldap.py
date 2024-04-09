@@ -68,7 +68,7 @@ def disable_self_provisioners() -> Dict:
 
     status_dict = {}
 
-    # TODO: YP - this rolebinding does not exist (tested on AWS-IPI and HCP)
+    # TODO: YP - this rolebinding does not exist (tested on AWS-OSD and HCP)
     if self_provisioner_rb.exists:
         status_dict["Set role binding subjects to null"] = set_role_binding_subjects_null(
             self_provisioner_rb=self_provisioner_rb

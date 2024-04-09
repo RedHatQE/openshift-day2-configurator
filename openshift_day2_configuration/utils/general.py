@@ -3,10 +3,15 @@ from functools import wraps
 from typing import Any, Dict, List, Optional
 from logging import Logger
 
+import click
+from ocp_utilities.infra import get_client
 from pyaml_env import parse_config
 from rich import box
 from rich.progress import Progress, TaskID
 from rich.table import Table
+
+
+LOGGER = Logger(__name__)
 
 
 class KubeconfigExportedError(Exception):
@@ -32,6 +37,13 @@ def verify_and_set_kubeconfig(config: Dict) -> None:
         raise KubeconfigMissingFileError(f"Kubeconfig {kubeconfig_path} does not exist")
 
     os.environ["KUBECONFIG"] = kubeconfig_path
+
+    try:
+        get_client()
+
+    except Exception as ex:
+        LOGGER.error(f"Cannot access cluster with kubeconfig {kubeconfig_path}, {ex}")
+        raise click.Abort()
 
 
 def get_day2_configs():

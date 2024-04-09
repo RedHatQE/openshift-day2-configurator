@@ -41,6 +41,27 @@ files = [
 ]
 
 [[package]]
+name = "beautifulsoup4"
+version = "4.12.3"
+description = "Screen-scraping library"
+optional = false
+python-versions = ">=3.6.0"
+files = [
+    {file = "beautifulsoup4-4.12.3-py3-none-any.whl", hash = "sha256:b80878c9f40111313e55da8ba20bdba06d8fa3969fc68304167741bbf9e082ed"},
+    {file = "beautifulsoup4-4.12.3.tar.gz", hash = "sha256:74e3d1928edc070d21748185c46e3fb33490f22f52a3addee9aee0f4f7781051"},
+]
+
+[package.dependencies]
+soupsieve = ">1.2"
+
+[package.extras]
+cchardet = ["cchardet"]
+chardet = ["chardet"]
+charset-normalizer = ["charset-normalizer"]
+html5lib = ["html5lib"]
+lxml = ["lxml"]
+
+[[package]]
 name = "cachetools"
 version = "5.3.3"
 description = "Extensible memoizing collections and decorators"
@@ -606,6 +627,27 @@ signals = ["blinker (>=1.4.0)"]
 signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
+name = "openshift-python-utilities"
+version = "5.0.35"
+description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
+optional = false
+python-versions = "<4.0,>=3.8"
+files = [
+    {file = "openshift_python_utilities-5.0.35.tar.gz", hash = "sha256:c375f07f512167cbae4500e18b7f7ccf65f01b6a1a32c80e7f620a283fab0299"},
+]
+
+[package.dependencies]
+beautifulsoup4 = ">=4.12.3,<5.0.0"
+colorlog = ">=6.7.0,<7.0.0"
+openshift-python-wrapper = ">=10.0.4"
+openshift-python-wrapper-data-collector = ">=1.0.4"
+python-simple-logger = ">=1.0.5"
+pyyaml = ">=6.0.1,<7.0.0"
+requests = ">=2.31.0,<3.0.0"
+semver = ">=3.0.2,<4.0.0"
+timeout-sampler = ">=0.0.17"
+
+[[package]]
 name = "openshift-python-wrapper"
 version = "10.0.31"
 description = "Wrapper around https://github.com/kubernetes-client/python"
@@ -624,6 +666,22 @@ python-benedict = ">=0.33.0,<0.34.0"
 python-simple-logger = ">=1.0.6"
 timeout-sampler = ">=0.0.17"
 xmltodict = ">=0.13.0,<0.14.0"
+
+[[package]]
+name = "openshift-python-wrapper-data-collector"
+version = "1.0.37"
+description = "Data collector for https://github.com/openshift/openshift-python-wrapper when running with PyTest"
+optional = false
+python-versions = "<4.0,>=3.8"
+files = [
+    {file = "openshift_python_wrapper_data_collector-1.0.37.tar.gz", hash = "sha256:dbdc7cb0bc2eb3bed618d0771f1eb406c7dfeae1caf3bea66985136cc314cdbc"},
+]
+
+[package.dependencies]
+openshift-python-wrapper = ">=10.0.0"
+pytest = ">=8.0.0,<9.0.0"
+pytest-testconfig = ">=0.2.0,<0.3.0"
+pyyaml = ">=6.0.1,<7.0.0"
 
 [[package]]
 name = "packaging"
@@ -861,6 +919,21 @@ pytest = ">=6.2.5"
 dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
+name = "pytest-testconfig"
+version = "0.2.0"
+description = "Test configuration plugin for pytest."
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+files = [
+    {file = "pytest-testconfig-0.2.0.tar.gz", hash = "sha256:0fa9e210bc2dd83d7408470cea8fb6e607576551bb3b1f9524cb51d8554a3da6"},
+    {file = "pytest_testconfig-0.2.0-py3-none-any.whl", hash = "sha256:0cfaaf4f47e0cf84358ec8dd2294df0358da2bc29730069aad2b4a2094c1a295"},
+]
+
+[package.dependencies]
+pytest = ">=3.5.0"
+pyyaml = "*"
+
+[[package]]
 name = "python-benedict"
 version = "0.33.2"
 description = "python-benedict is a dict subclass with keylist/keypath/keyattr support, normalized I/O operations (base64, csv, ini, json, pickle, plist, query-string, toml, xls, xml, yaml) and many utilities... for humans, obviously."
@@ -1075,6 +1148,17 @@ files = [
 pyasn1 = ">=0.1.3"
 
 [[package]]
+name = "semver"
+version = "3.0.2"
+description = "Python helper for Semantic Versioning (https://semver.org)"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "semver-3.0.2-py3-none-any.whl", hash = "sha256:b1ea4686fe70b981f85359eda33199d60c53964284e0cfb4977d243e37cf4bf4"},
+    {file = "semver-3.0.2.tar.gz", hash = "sha256:6253adb39c70f6e51afed2fa7152bcd414c411286088fb4b9effb133885ab4cc"},
+]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -1083,6 +1167,17 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+]
+
+[[package]]
+name = "soupsieve"
+version = "2.5"
+description = "A modern CSS selector implementation for Beautiful Soup."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "soupsieve-2.5-py3-none-any.whl", hash = "sha256:eaa337ff55a1579b6549dc679565eac1e3d000563bcb1c8ab0d0fefbc0c2cdc7"},
+    {file = "soupsieve-2.5.tar.gz", hash = "sha256:5663d5a7b3bfaeee0bc4372e7fc48f9cff4940b3eec54a6451cc5299f1097690"},
 ]
 
 [[package]]
@@ -1223,4 +1318,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "4a715b12bbe4427e37197601127f005bfe63b427f9d989cf2017ecb74ff2693e"
+content-hash = "2a78c1e674dd13c3b034d868604749e4bf47b25ba8ec6933d401045001e728cf"
