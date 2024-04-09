@@ -1,12 +1,10 @@
 import logging
-import os
 from typing import Callable, Dict, Optional
 
 from pyhelper_utils.runners import sys
 from rich import box
 from rich.progress import Progress, TaskID
 from rich.table import Table
-from simple_logger.logger import get_logger
 
 from openshift_day2_configuration.configurators.mappings import configurators_mappings
 
@@ -21,14 +19,6 @@ class KubeconfigMissingInConfigError(Exception):
 
 class KubeconfigMissingFileError(Exception):
     pass
-
-
-def set_logger(name):
-    logger = get_logger(name=name)
-    logger.setLevel(os.getenv("OCP_DAY2_LOG_LEVEL", "INFO"))
-    logging.disable(logging.INFO)
-
-    return logger
 
 
 def verify_and_execute_configurator(
