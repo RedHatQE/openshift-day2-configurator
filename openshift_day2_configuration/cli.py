@@ -35,7 +35,7 @@ def main(verbose, pdb):
     if verbose:
         LOGGER.setLevel(logging.DEBUG)
     else:
-        logging.disable(logging.CRITICAL)
+        logging.disable(logging.INFO)
 
     configurators_mapping = {"ldap": execute_ldap_configuration}
 

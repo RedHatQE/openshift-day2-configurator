@@ -1,7 +1,6 @@
 import os
 from functools import wraps
 from typing import Any, Dict, List, Optional
-from logging import Logger
 
 import click
 from ocp_utilities.infra import get_client
@@ -9,9 +8,10 @@ from pyaml_env import parse_config
 from rich import box
 from rich.progress import Progress, TaskID
 from rich.table import Table
+from simple_logger.logger import get_logger
 
 
-LOGGER = Logger(__name__)
+LOGGER = get_logger(__name__)
 
 
 class KubeconfigExportedError(Exception):
@@ -28,13 +28,16 @@ class KubeconfigMissingFileError(Exception):
 
 def verify_and_set_kubeconfig(config: Dict) -> None:
     if os.environ.get("KUBECONFIG"):
-        raise KubeconfigExportedError("KUBECONFIG environment variable is set. Please unset it.")
+        LOGGER.error("KUBECONFIG environment variable is set. Please unset it.")
+        raise click.Abort()
 
     if not (kubeconfig_path := config.get("kubeconfig")):
-        raise KubeconfigMissingInConfigError("Missing kubeconfig in day2_configuration.yaml")
+        LOGGER.error("Missing kubeconfig in day2 configuration yaml")
+        raise click.Abort()
 
     if not os.path.exists(kubeconfig_path):
-        raise KubeconfigMissingFileError(f"Kubeconfig {kubeconfig_path} does not exist")
+        LOGGER.error(f"Kubeconfig {kubeconfig_path} does not exist")
+        raise click.Abort()
 
     os.environ["KUBECONFIG"] = kubeconfig_path
 
@@ -50,12 +53,14 @@ def get_day2_configs():
     day2_config = os.getenv("OPENSHIFT_DAY2_CONFIG", os.path.expanduser("~/.config/openshift-day2/config.yaml"))
 
     if not os.path.exists(day2_config):
-        raise ValueError(f"Openshift Day2 config {day2_config} file does not exist")
+        LOGGER.error(f"Openshift Day2 config {day2_config} file does not exist")
+        raise click.Abort()
 
     day2_config = parse_config(day2_config)
 
     if not (day2_configurators := day2_config.get("configurators")):
-        raise ValueError("Missing configurators in day2_configuration.yaml")
+        LOGGER.error("Missing configurators in day2 configuration yaml")
+        raise click.Abort()
 
     verify_and_set_kubeconfig(config=day2_config)
 
@@ -68,7 +73,7 @@ DAY2_CONFIG, DAY2_CONFIGURATORS = get_day2_configs()
 def verify_and_execute_configurator(
     config: Optional[Dict] = None,
     config_keys: Optional[List] = None,
-    logger: Optional[Logger] = None,
+    logger: Optional[LOGGER] = None,
 ) -> Any:
     """
     Decorator to verify and execute configurator.
