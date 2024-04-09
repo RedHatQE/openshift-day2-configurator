@@ -49,11 +49,6 @@ def day2_config_with_non_existing_kubeconfig(day2_config_env_variable):
     yield day2_config_env_variable
 
 
-@pytest.fixture
-def day2_example_config():
-    os.environ["OPENSHIFT_DAY2_CONFIG"] = "day2_configuration.example.yaml"
-
-
 def test_missing_day2_config_file(day2_config_env_variable):
     with pytest.raises(SystemExit, match="1"):
         get_day2_configs(config_file=day2_config_env_variable)
