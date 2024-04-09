@@ -1,8 +1,11 @@
 [tool.coverage.run]
-omit = ["openshift_day2_configuration/cli.py"]
+omit = [
+  "openshift_day2_configuration/cli.py",
+  "openshift_day2_configuration/tests/*",
+]
 
 [tool.coverage.report]
-fail_under = 42 # TODO: Need to be at least 60
+fail_under = 36   # TODO: Need to be at least 60
 skip_empty = true
 
 [tool.coverage.html]

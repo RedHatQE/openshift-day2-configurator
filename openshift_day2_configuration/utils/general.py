@@ -60,7 +60,10 @@ def verify_and_set_kubeconfig(config: Dict) -> None:
 
 
 def get_day2_configs():
-    day2_config = os.getenv("OPENSHIFT_DAY2_CONFIG", os.path.expanduser("~/.config/openshift-day2/config.yaml"))
+    day2_config = os.getenv(
+        "OPENSHIFT_DAY2_CONFIG",
+        os.path.expanduser("~/.config/openshift-day2/config.yaml"),
+    )
 
     if not os.path.exists(day2_config):
         LOGGER.error(f"Openshift Day2 config {day2_config} file does not exist")
