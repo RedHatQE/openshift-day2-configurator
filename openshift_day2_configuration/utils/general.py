@@ -1,21 +1,12 @@
 import logging
-import os
 from typing import Callable, Dict, Optional
 
+from pyhelper_utils.runners import sys
 from rich import box
 from rich.progress import Progress, TaskID
 from rich.table import Table
-from simple_logger.logger import get_logger
 
 from openshift_day2_configuration.configurators.mappings import configurators_mappings
-
-
-def set_logger(name):
-    logger = get_logger(name=name)
-    logger.setLevel(os.getenv("OCP_DAY2_LOG_LEVEL", "INFO"))
-    logging.disable(logging.INFO)
-
-    return logger
 
 
 def verify_and_execute_configurator(
@@ -54,6 +45,7 @@ def base_table() -> Table:
 def execute_configurators(
     day2_configurators: Dict,
     table: Table,
+    logger: logging.Logger,
     progress: Optional[Progress] = None,
     task: Optional[TaskID] = None,
     task_progress: Optional[int] = None,
@@ -73,6 +65,10 @@ def execute_configurators(
 
         for result_str, result_status in _configurators_mappings[configurator_name](config=config).items():
             if progress:
+                if not task:
+                    logger.debug("task not set")
+                    sys.exit(1)
+
                 progress.update(task, advance=task_progress, refresh=True)
 
             status = "Passed" if result_status["res"] else failed_str

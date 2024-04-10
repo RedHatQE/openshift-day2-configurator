@@ -1,3 +1,4 @@
+import logging
 from openshift_day2_configuration.configuration.configurations import get_day2_configs
 from openshift_day2_configuration.utils.general import base_table, execute_configurators
 
@@ -10,15 +11,17 @@ def table():
 
 
 @pytest.fixture
-def cofigurators_dict(day2_valid_config):
-    _, cofigurators = get_day2_configs(config_file_path=day2_valid_config)
-    return cofigurators
+def day2_configurators(valid_setup):
+    _, day2_configurators = get_day2_configs(config_file=valid_setup)
+    yield day2_configurators
 
 
-def test_execute_configurators_non_valid_configurator(
-    no_kubeconfig_env_variable, mocked_client, table, cofigurators_dict
-):
-    res = execute_configurators(table=table, day2_configurators=cofigurators_dict)
+def test_execute_configurators_non_valid_configurator(day2_configurators, table):
+    res = execute_configurators(
+        day2_configurators=day2_configurators,
+        table=table,
+        logger=logging.getLogger(name="test-execute-configurators"),
+    )
     assert [col.header for col in res.columns] == [
         "Configurator",
         "Step",
