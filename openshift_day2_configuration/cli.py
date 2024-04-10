@@ -29,10 +29,9 @@ LOGGER = set_logger(name="day2-config-cluster")
 )
 def main(config_file_path, pdb):
     table = base_table()
-    execute_configurators_kwargs = {
-        "table": table,
-    }
     day2_config, day2_configurators = get_day2_configs(config_file_path=config_file_path)
+
+    execute_configurators_kwargs = {"table": table, "day2_configurators": day2_configurators}
 
     if pdb:
         table = execute_configurators(**execute_configurators_kwargs)

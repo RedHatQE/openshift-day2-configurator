@@ -7,7 +7,6 @@ from rich.progress import Progress, TaskID
 from rich.table import Table
 from simple_logger.logger import get_logger
 
-from openshift_day2_configuration.configuration.configurations import get_day2_configs
 from openshift_day2_configuration.configurators.mappings import configurators_mappings
 
 
@@ -53,6 +52,7 @@ def base_table() -> Table:
 
 
 def execute_configurators(
+    day2_configurators: Dict,
     table: Table,
     progress: Optional[Progress] = None,
     task: Optional[TaskID] = None,
@@ -60,7 +60,6 @@ def execute_configurators(
 ) -> Table:
     failed_str = "[red]Failed[not red]"
     _configurators_mappings = configurators_mappings()
-    _, day2_configurators = get_day2_configs()
 
     for configurator_name, config in day2_configurators.items():
         if configurator_name not in _configurators_mappings:
