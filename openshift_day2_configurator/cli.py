@@ -17,7 +17,7 @@ from openshift_day2_configurator.utils.general import (
 def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: bool) -> None:
     logger = get_logger(name="openshift-day2-configurator")
 
-    if verbose:
+    if verbose or pdb:
         logger.setLevel(logging.DEBUG)
     else:
         logging.disable(logging.CRITICAL)
@@ -29,17 +29,10 @@ def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: b
         table = execute_configurators(day2_configurators=day2_configurators, table=_base_table, logger=logger)
     else:
         with Progress() as progress:
-            task_progress = 1
-            task = progress.add_task(
-                "[green]Executing Day2 configurations ",
-                total=len(day2_configurators) + task_progress,
-            )
             table = execute_configurators(
                 day2_configurators=day2_configurators,
                 table=_base_table,
                 progress=progress,
-                task=task,
-                task_progress=task_progress,
                 logger=logger,
             )
 

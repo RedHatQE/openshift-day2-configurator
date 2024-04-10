@@ -18,7 +18,7 @@ def verify_and_execute_configurator(
     **kwargs,
 ) -> Dict:
     task_name = task_name or func.__name__
-    task = progress.add_task(task_name, total=1) if progress else None
+    task = progress.add_task(f"    {task_name}", total=1) if progress else None
 
     try:
         if logger_obj:
@@ -72,6 +72,13 @@ def execute_configurators(
 ) -> Table:
     failed_str = "[red]Failed[not red]"
     _configurators_mappings = configurators_mappings()
+
+    if progress:
+        task_progress = 1
+        task = progress.add_task(
+            "[green]Executing Day2 configurations ",
+            total=len(day2_configurators),
+        )
 
     for configurator_name, config in day2_configurators.items():
         if configurator_name not in _configurators_mappings:

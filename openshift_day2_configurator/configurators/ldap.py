@@ -127,31 +127,45 @@ def set_role_binding_subjects_null(self_provisioner_rb: ClusterRoleBinding, logg
 
 
 def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: Progress) -> Dict:
+    status_dict = {}
     logger.debug("Configuring LDAP")
     create_secret_ldap_task_name = "Create LDAP secret"  # pragma: allowlist secret
     create_auth_task_name = "Create OAuth"
     disable_self_provisioners_task_name = "Disable self provisioners"
 
-    status_dict = {
-        "Create LDAP secret": verify_and_execute_configurator(
-            func=create_ldap_secret,
-            config=config,
-            logger_obj=logger,
-            bind_password="bind_password",  # pragma: allowlist secret
-            progress=progress,
-            task_name=create_secret_ldap_task_name,
-        ),
-        "Create OAuth": verify_and_execute_configurator(
-            func=update_cluster_oath,
-            config=config,
-            logger_obj=logger,
-            bind_dn_name="bind_dn_name",
-            bind_password="bind_password",  # pragma: allowlist secret
-            url="url",
-            progress=progress,
-            task_name=create_auth_task_name,
-        ),
-    }
+    if progress:
+        all_tasks = [
+            create_secret_ldap_task_name,
+            create_auth_task_name,
+            disable_self_provisioners_task_name,
+        ]
+        total_task = progress.add_task(description="  Configuring LDAP", total=len(all_tasks))
+
+    status_dict["Create LDAP secret"] = verify_and_execute_configurator(
+        func=create_ldap_secret,
+        config=config,
+        logger_obj=logger,
+        bind_password="bind_password",  # pragma: allowlist secret
+        progress=progress,
+        task_name=create_secret_ldap_task_name,
+    )
+    if progress:
+        progress.update(total_task, advance=1)
+
+    status_dict["Create OAuth"] = verify_and_execute_configurator(
+        func=update_cluster_oath,
+        config=config,
+        logger_obj=logger,
+        bind_dn_name="bind_dn_name",
+        bind_password="bind_password",  # pragma: allowlist secret
+        url="url",
+        progress=progress,
+        task_name=create_auth_task_name,
+    )
+
+    if progress:
+        progress.update(total_task, advance=1)
+
     status_dict.update(
         verify_and_execute_configurator(
             func=disable_self_provisioners,
@@ -160,6 +174,8 @@ def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: P
             task_name=disable_self_provisioners_task_name,
         )
     )
+    if progress:
+        progress.update(total_task, advance=1)
 
     # TODO: Configure LDAP Groups with Active Directory section
 
