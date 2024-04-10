@@ -1,12 +1,12 @@
 import os
 import sys
-from typing import Dict
+from typing import Dict, Tuple
 from ocp_utilities.infra import get_client
 from pyaml_env import parse_config
 import rich
 
 
-def get_day2_configs(config_file):
+def get_day2_configs(config_file: str) -> Tuple[Dict, Dict]:
     if not config_file or not os.path.exists(config_file):
         rich.print(f"Openshift Day2 config {config_file} file does not exist")
         sys.exit(1)
