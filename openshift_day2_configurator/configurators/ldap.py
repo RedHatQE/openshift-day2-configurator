@@ -6,6 +6,7 @@ from ocp_resources.cluster_role_binding import ClusterRoleBinding
 from ocp_resources.oauth import OAuth
 from ocp_resources.resource import ResourceEditor
 from pyhelper_utils.shell import run_command
+from rich.progress import Progress
 
 from openshift_day2_configurator.utils.general import (
     verify_and_execute_configurator,
@@ -88,9 +89,13 @@ def disable_self_provisioners(logger: logging.Logger) -> Dict:
 
 def set_role_binding_autoupdate_false(self_provisioner_rb: ClusterRoleBinding, logger: logging.Logger) -> Dict:
     logger.debug(f"Patch clusterrolebinding {self_provisioner_rb.name}: autoupdate: false")
-    ResourceEditor({
-        self_provisioner_rb: {"metadata": {"rbac.authorization.kubernetes.io/autoupdate": "false"}}
-    }).update()
+    try:
+        ResourceEditor({
+            self_provisioner_rb: {"metadata": {"rbac.authorization.kubernetes.io/autoupdate": "false"}}
+        }).update()
+    except Exception as ex:
+        logger.debug(f"Failed to patch clusterrolebinding {self_provisioner_rb.name}")
+        return {"res": False, "err": str(ex)}
 
     return {"res": True, "err": None}
 
@@ -117,28 +122,40 @@ def set_role_binding_subjects_null(self_provisioner_rb: ClusterRoleBinding, logg
     return {"res": True, "err": None}
 
 
-def execute_ldap_configuration(config: Dict, logger: logging.Logger) -> Dict:
+def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: Progress) -> Dict:
     logger.debug("Configuring LDAP")
-    ldap_config = config["ldap"]
+    create_secret_ldap_task_name = "Create LDAP secret"  # pragma: allowlist secret
+    create_auth_task_name = "Create OAuth"
+    disable_self_provisioners_task_name = "Disable self provisioners"
 
     status_dict = {
         "Create LDAP secret": verify_and_execute_configurator(
             func=create_ldap_secret,
-            config=ldap_config,
+            config=config,
             logger_obj=logger,
             bind_password="bind_password",  # pragma: allowlist secret
+            progress=progress,
+            task_name=create_secret_ldap_task_name,
         ),
         "Create OAuth": verify_and_execute_configurator(
             func=update_cluster_oath,
-            config=ldap_config,
+            config=config,
             logger_obj=logger,
             bind_dn_name="bind_dn_name",
             bind_password="bind_password",  # pragma: allowlist secret
             url="url",
+            progress=progress,
+            task_name=create_auth_task_name,
         ),
     }
-
-    status_dict.update(disable_self_provisioners(logger=logger))
+    status_dict.update(
+        verify_and_execute_configurator(
+            func=disable_self_provisioners,
+            logger=logger,
+            progress=progress,
+            task_name=disable_self_provisioners_task_name,
+        )
+    )
 
     # TODO: Configure LDAP Groups with Active Directory section
 

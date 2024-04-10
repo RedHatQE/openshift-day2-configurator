@@ -1,7 +1,6 @@
 import logging
 from typing import Callable, Dict, Optional
 
-from pyhelper_utils.runners import sys
 from rich import box
 from rich.progress import Progress, TaskID
 from rich.table import Table
@@ -13,17 +12,38 @@ def verify_and_execute_configurator(
     func: Callable,
     config: Optional[Dict] = None,
     logger_obj: Optional[logging.Logger] = None,
+    progress: Optional[Progress] = None,
+    task_name: Optional[str] = None,
     *args,
     **kwargs,
 ) -> Dict:
+    task_name = task_name or func.__name__
+    task = progress.add_task(task_name, total=1) if progress else None
+
     try:
+        if logger_obj:
+            logger_obj.info(task_name)
+
         if kwargs and config and (missing_keys := [_key for _key in kwargs if _key not in config]):
+            if task:
+                progress.update(task, advance=1, description=task_name)
+
             return {"res": False, "err": f"Missing config keys: {missing_keys}"}
 
-        return func(*args, **kwargs)
+        res = func(*args, **kwargs)
+
+        if task:
+            progress.update(task, advance=1, description=task_name)
+
+        return res
+
     except Exception as ex:
         if logger_obj:
             logger_obj.info(ex)
+
+        if task:
+            progress.update(task, advance=1, description=task_name)
+
         return {"res": False, "err": str(ex)}
 
 
@@ -59,16 +79,14 @@ def execute_configurators(
                 configurator_name,
                 "",
                 failed_str,
-                "Missing configurator in configuration mapping",
+                "Missing configurator mapping in configuration file",
             )
             continue
 
-        for result_str, result_status in _configurators_mappings[configurator_name](config=config).items():
+        for result_str, result_status in _configurators_mappings[configurator_name](
+            config=config, logger=logger, progress=progress
+        ).items():
             if progress:
-                if not task:
-                    logger.debug("task not set")
-                    sys.exit(1)
-
                 progress.update(task, advance=task_progress, refresh=True)
 
             status = "Passed" if result_status["res"] else failed_str

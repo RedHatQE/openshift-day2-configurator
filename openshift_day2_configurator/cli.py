@@ -18,9 +18,9 @@ def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: b
     logger = get_logger(name="openshift-day2-configurator")
 
     if verbose:
-        logger.setLevel("DEBUG")
+        logger.setLevel(logging.DEBUG)
     else:
-        logging.disable(logging.INFO)
+        logging.disable(logging.CRITICAL)
 
     _base_table = base_table()
     day2_config, day2_configurators = get_day2_configs(config_file=config_file)
@@ -47,7 +47,7 @@ def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: b
 
     if output_file := day2_config.get("output_log_file"):
         with open(output_file, "w") as output_file:
-            print(table, file=output_file)
+            rich.print(table, file=output_file)
 
 
 @click.command("openshift-day2-configurator")
