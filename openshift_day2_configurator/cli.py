@@ -2,7 +2,7 @@ import logging
 import os
 import click
 from pyhelper_utils.runners import function_runner_with_pdb
-from rich import print
+import rich
 from rich.progress import Progress
 from simple_logger.logger import get_logger
 
@@ -43,7 +43,7 @@ def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: b
                 logger=logger,
             )
 
-    print(table)
+    rich.print(table)
 
     if output_file := day2_config.get("output_log_file"):
         with open(output_file, "w") as output_file:
