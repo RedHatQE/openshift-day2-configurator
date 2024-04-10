@@ -26,7 +26,7 @@ def update_cluster_oath(bind_dn_name: str, bind_password: str, url: str, logger:
     cluster_oath = OAuth(name="cluster")
 
     if not cluster_oath.exists:
-        logger.error(f"Cluster OAuth {cluster_oath.name} does not exist")
+        logger.debug(f"Cluster OAuth {cluster_oath.name} does not exist")
         return {
             "res": False,
             "err": f"Cluster OAuth {cluster_oath.name} does not exist",
@@ -53,7 +53,11 @@ def update_cluster_oath(bind_dn_name: str, bind_password: str, url: str, logger:
             }
         ]
     }
-    ResourceEditor({cluster_oath: {"spec": {oath_dict}}}).update()
+    try:
+        ResourceEditor({cluster_oath: {"spec": {oath_dict}}}).update()
+    except Exception as ex:
+        logger.debug(f"Failed to update cluster oauth with error {ex}")
+        return {"res": False, "err": str(ex)}
 
     return {"res": True, "err": None}
 
@@ -94,7 +98,7 @@ def set_role_binding_autoupdate_false(self_provisioner_rb: ClusterRoleBinding, l
             self_provisioner_rb: {"metadata": {"rbac.authorization.kubernetes.io/autoupdate": "false"}}
         }).update()
     except Exception as ex:
-        logger.debug(f"Failed to patch clusterrolebinding {self_provisioner_rb.name}")
+        logger.debug(f"Failed to patch clusterrolebinding {self_provisioner_rb.name} with error {ex}")
         return {"res": False, "err": str(ex)}
 
     return {"res": True, "err": None}
