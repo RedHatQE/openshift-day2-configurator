@@ -2,7 +2,7 @@ import logging
 from typing import Callable, Dict, Optional
 
 from rich import box
-from rich.progress import Progress, TaskID
+from rich.progress import Progress
 from rich.table import Table
 
 from openshift_day2_configurator.configurators.mappings import configurators_mappings
@@ -17,22 +17,22 @@ def verify_and_execute_configurator(
     *args,
     **kwargs,
 ) -> Dict:
-    task_name = task_name or func.__name__
-    task = progress.add_task(f"    {task_name}", total=1) if progress else None
+    task_name = f"    {task_name}" if task_name else func.__name__
+    task = progress.add_task(task_name, total=1) if progress else None
 
     try:
         if logger_obj:
             logger_obj.debug(task_name)
 
         if kwargs and config and (missing_keys := [_key for _key in kwargs if _key not in config]):
-            if progress and task:
+            if progress and task is not None:
                 progress.update(task, advance=1, description=task_name)
 
             return {"res": False, "err": f"Missing config keys: {missing_keys}"}
 
         res = func(*args, **kwargs)
 
-        if progress and task:
+        if progress and task is not None:
             progress.update(task, advance=1, description=task_name)
 
         return res
@@ -41,7 +41,7 @@ def verify_and_execute_configurator(
         if logger_obj:
             logger_obj.debug(ex)
 
-        if progress and task:
+        if progress and task is not None:
             progress.update(task, advance=1, description=task_name)
 
         return {"res": False, "err": str(ex)}
@@ -67,12 +67,12 @@ def execute_configurators(
     table: Table,
     logger: logging.Logger,
     progress: Optional[Progress] = None,
-    task: Optional[TaskID] = None,
     task_progress: Optional[int] = None,
 ) -> Table:
     failed_str = "[red]Failed[not red]"
     _configurators_mappings = configurators_mappings()
 
+    task = None
     if progress:
         task_progress = 1
         task = progress.add_task(
@@ -93,7 +93,7 @@ def execute_configurators(
         for result_str, result_status in _configurators_mappings[configurator_name](
             config=config, logger=logger, progress=progress
         ).items():
-            if progress and task:
+            if progress and task is not None:
                 progress.update(task, advance=task_progress, refresh=True)
 
             status = "Passed" if result_status["res"] else failed_str
