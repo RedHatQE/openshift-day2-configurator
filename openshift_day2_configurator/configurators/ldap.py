@@ -1,6 +1,6 @@
 import logging
 import shlex
-from typing import Dict
+from typing import Dict, Optional
 
 from ocp_resources.cluster_role_binding import ClusterRoleBinding
 from ocp_resources.oauth import OAuth
@@ -126,7 +126,7 @@ def set_role_binding_subjects_null(self_provisioner_rb: ClusterRoleBinding, logg
     return {"res": True, "err": None}
 
 
-def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: Progress) -> Dict:
+def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: Optional[Progress] = None) -> Dict:
     status_dict = {}
     logger.debug("Configuring LDAP")
     create_secret_ldap_task_name = "Create LDAP secret"  # pragma: allowlist secret

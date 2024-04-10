@@ -49,6 +49,7 @@ def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: b
     "--config-file",
     default=os.environ.get("OPENSHIFT_DAY2_CONFIG"),
     type=click.Path(exists=True, resolve_path=True),
+    required=True,
     show_default=True,
     help="openshift day2 configurator config file",
 )
@@ -66,8 +67,13 @@ def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: b
     help="Enable debug logging, if not set no logs will be printed",
 )
 def cli_entrypoint(config_file: str, pdb: bool, verbose: bool) -> None:
-    openshift_day2_configurator_executor(config_file=config_file, pdb=pdb, verbose=verbose)
+    function_runner_with_pdb(
+        func=openshift_day2_configurator_executor,
+        config_file=config_file,
+        pdb=pdb,
+        verbose=verbose,
+    )
 
 
 if __name__ == "__main__":
-    function_runner_with_pdb(func=cli_entrypoint)
+    cli_entrypoint()
