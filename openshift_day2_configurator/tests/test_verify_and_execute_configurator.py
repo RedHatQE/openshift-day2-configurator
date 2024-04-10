@@ -1,7 +1,7 @@
 import pytest
 from simple_logger.logger import get_logger
 
-from openshift_day2_configuration.utils.general import verify_and_execute_configurator
+from openshift_day2_configurator.utils.general import verify_and_execute_configurator
 
 LOGGER = get_logger(name="test-configurator")
 

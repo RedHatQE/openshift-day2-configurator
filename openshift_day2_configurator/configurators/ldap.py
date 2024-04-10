@@ -7,7 +7,7 @@ from ocp_resources.oauth import OAuth
 from ocp_resources.resource import ResourceEditor
 from pyhelper_utils.shell import run_command
 
-from openshift_day2_configuration.utils.general import (
+from openshift_day2_configurator.utils.general import (
     verify_and_execute_configurator,
 )
 

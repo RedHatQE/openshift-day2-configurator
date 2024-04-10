@@ -36,7 +36,7 @@ def no_kubeconfig_env_variable():
 
 @pytest.fixture
 def mocked_client(mocker):
-    _oc_client = mocker.patch("openshift_day2_configuration.configuration.configurations.get_client")
+    _oc_client = mocker.patch("openshift_day2_configurator.configuration.configurations.get_client")
     _oc_client.resources.api_groups = True
 
 

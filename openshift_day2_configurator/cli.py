@@ -7,14 +7,14 @@ from rich.progress import Progress
 from simple_logger.logger import get_logger
 
 
-from openshift_day2_configuration.configuration.configurations import get_day2_configs
-from openshift_day2_configuration.utils.general import (
+from openshift_day2_configurator.configuration.configurations import get_day2_configs
+from openshift_day2_configurator.utils.general import (
     base_table,
     execute_configurators,
 )
 
 
-def openshift_day2_configuration_executor(config_file: str, pdb: bool, verbose: bool) -> None:
+def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: bool) -> None:
     logger = get_logger(name="openshift-day2-configurator")
 
     if verbose:
@@ -73,7 +73,7 @@ def openshift_day2_configuration_executor(config_file: str, pdb: bool, verbose: 
     help="Enable debug logging, if not set no logs will be printed",
 )
 def cli_entrypoint(config_file: str, pdb: bool, verbose: bool) -> None:
-    openshift_day2_configuration_executor(config_file=config_file, pdb=pdb, verbose=verbose)
+    openshift_day2_configurator_executor(config_file=config_file, pdb=pdb, verbose=verbose)
 
 
 if __name__ == "__main__":

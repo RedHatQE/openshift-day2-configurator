@@ -3,7 +3,7 @@ import os
 from pyaml_env.parse_config import yaml
 import pytest
 
-from openshift_day2_configuration.configuration.configurations import get_day2_configs
+from openshift_day2_configurator.configuration.configurations import get_day2_configs
 
 pytestmark = pytest.mark.usefixtures("no_kubeconfig_env_variable")
 

@@ -1,7 +1,7 @@
 [tool.coverage.run]
 omit = [
-  "openshift_day2_configuration/cli.py",
-  "openshift_day2_configuration/tests/*",
+  "openshift_day2_configurator/cli.py",
+  "openshift_day2_configurator/tests/*",
 ]
 
 [tool.coverage.report]
@@ -27,7 +27,7 @@ description = "Tool to configure specific day 2 operations on Openshift"
 authors = ["myakove <myakove@gmail.com>", "rnetser <ruty_n4@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
-packages = [{ include = "openshift_day2_configuration" }]
+packages = [{ include = "openshift_day2_configurator" }]
 repository = "https://github.com/RedHatQE/openshift-day2-configuration"
 homepage = "https://github.com/RedHatQE/openshift-day2-configuration"
 documentation = "https://github.com/RedHatQE/openshift-day2-configuration/blob/main/README.md"
@@ -37,7 +37,7 @@ classifiers = [
 ]
 
 [tool.poetry.scripts]
-openshift-day2-configurator = "openshift_day2_configuration:cli_entrypoint"
+openshift-day2-configurator = "openshift_day2_configurator.cli:cli_entrypoint"
 
 [tool.poetry.dependencies]
 python = "^3.8"

@@ -1,6 +1,6 @@
 import logging
-from openshift_day2_configuration.configuration.configurations import get_day2_configs
-from openshift_day2_configuration.utils.general import base_table, execute_configurators
+from openshift_day2_configurator.configuration.configurations import get_day2_configs
+from openshift_day2_configurator.utils.general import base_table, execute_configurators
 
 import pytest
 

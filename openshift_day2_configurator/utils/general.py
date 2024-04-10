@@ -6,7 +6,7 @@ from rich import box
 from rich.progress import Progress, TaskID
 from rich.table import Table
 
-from openshift_day2_configuration.configurators.mappings import configurators_mappings
+from openshift_day2_configurator.configurators.mappings import configurators_mappings
 
 
 def verify_and_execute_configurator(
