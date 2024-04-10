@@ -1,4 +1,5 @@
 import os
+
 import yaml
 import pytest
 
@@ -20,7 +21,7 @@ def day2_valid_config(tmp_path):
     with open(kubeconfig_path, "w") as fd:
         fd.write("apiVersion: v1\nkind: Config")
 
-    yield
+    yield day2_config_path
     del os.environ["OPENSHIFT_DAY2_CONFIG"]
 
 

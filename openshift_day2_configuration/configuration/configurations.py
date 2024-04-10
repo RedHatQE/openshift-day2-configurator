@@ -2,7 +2,6 @@ import os
 import sys
 from typing import Dict, List
 
-from click import Path
 from ocp_utilities.infra import get_client
 from pyaml_env import parse_config
 from simple_logger.logger import get_logger
@@ -34,7 +33,7 @@ def verify_and_set_kubeconfig(config: Dict) -> None:
         sys.exit(6)
 
 
-def get_day2_configs(config_file_path: Path) -> (Dict, List[str]):
+def get_day2_configs(config_file_path: str) -> (Dict, List[str]):
     day2_config = parse_config(config_file_path)
 
     if not (day2_configurators := day2_config.get("configurators")):

@@ -1,4 +1,3 @@
-import logging
 import shlex
 from typing import Dict
 
@@ -8,8 +7,12 @@ from ocp_resources.resource import ResourceEditor
 from pyhelper_utils.shell import run_command
 
 from openshift_day2_configuration.utils.general import (
+    set_logger,
     verify_and_execute_configurator,
 )
+
+
+LOGGER = set_logger(name="day2-ldap-config")
 
 
 def create_ldap_secret(bind_password: str) -> Dict:
@@ -21,11 +24,11 @@ def create_ldap_secret(bind_password: str) -> Dict:
     return {"res": res, "err": err}
 
 
-def update_cluster_oath(bind_dn_name: str, bind_password: str, url: str, logger: logging.Logger) -> Dict:
+def update_cluster_oath(bind_dn_name: str, bind_password: str, url: str) -> Dict:
     cluster_oath = OAuth(name="cluster")
 
     if not cluster_oath.exists:
-        logger.error(f"Cluster OAuth {cluster_oath.name} does not exist")
+        LOGGER.error(f"Cluster OAuth {cluster_oath.name} does not exist")
         return {
             "res": False,
             "err": f"Cluster OAuth {cluster_oath.name} does not exist",
@@ -57,7 +60,7 @@ def update_cluster_oath(bind_dn_name: str, bind_password: str, url: str, logger:
     return {"res": True, "err": None}
 
 
-def disable_self_provisioners(logger: logging.Logger) -> Dict:
+def disable_self_provisioners() -> Dict:
     self_provisioner_rb = ClusterRoleBinding(name="self-provisioner")
 
     status_dict = {}
@@ -65,7 +68,7 @@ def disable_self_provisioners(logger: logging.Logger) -> Dict:
     # TODO: YP - this rolebinding does not exist (tested on AWS-OSD and HCP)
     if self_provisioner_rb.exists:
         status_dict["Set role binding subjects to null"] = set_role_binding_subjects_null(
-            self_provisioner_rb=self_provisioner_rb, logger=logger
+            self_provisioner_rb=self_provisioner_rb,
         )
     else:
         status_dict["Self provisioners not found"] = {
@@ -74,20 +77,22 @@ def disable_self_provisioners(logger: logging.Logger) -> Dict:
         }
 
     status_dict["Remove role binding"] = remove_role_binding_from_group(
-        self_provisioner_rb=self_provisioner_rb, logger=logger
+        self_provisioner_rb=self_provisioner_rb,
     )
 
     # TODO - YP: check if the order matters or this action can be moved under the first resource.exists check
     if self_provisioner_rb.exists:
         status_dict["Set role binding autoupdate"] = set_role_binding_autoupdate_false(
-            self_provisioner_rb=self_provisioner_rb, logger=logger
+            self_provisioner_rb=self_provisioner_rb,
         )
 
     return status_dict
 
 
-def set_role_binding_autoupdate_false(self_provisioner_rb: ClusterRoleBinding, logger: logging.Logger) -> Dict:
-    logger.debug(f"Patch clusterrolebinding {self_provisioner_rb.name}: autoupdate: false")
+def set_role_binding_autoupdate_false(
+    self_provisioner_rb: ClusterRoleBinding,
+) -> Dict:
+    LOGGER.debug(f"Patch clusterrolebinding {self_provisioner_rb.name}: autoupdate: false")
     ResourceEditor({
         self_provisioner_rb: {"metadata": {"rbac.authorization.kubernetes.io/autoupdate": "false"}}
     }).update()
@@ -95,8 +100,10 @@ def set_role_binding_autoupdate_false(self_provisioner_rb: ClusterRoleBinding, l
     return {"res": True, "err": None}
 
 
-def remove_role_binding_from_group(self_provisioner_rb: ClusterRoleBinding, logger: logging.Logger) -> Dict:
-    logger.debug(f"Remove role binding {self_provisioner_rb.name} from group system:authenticated:oauth")
+def remove_role_binding_from_group(
+    self_provisioner_rb: ClusterRoleBinding,
+) -> Dict:
+    LOGGER.debug(f"Remove role binding {self_provisioner_rb.name} from group system:authenticated:oauth")
     # TODO - YP: the following warning when running the command in the doc:
     # Warning: Your changes may get lost whenever a master is restarted,
     # unless you prevent reconciliation of this rolebinding using the following command:
@@ -110,27 +117,29 @@ def remove_role_binding_from_group(self_provisioner_rb: ClusterRoleBinding, logg
     return {"res": res, "err": err}
 
 
-def set_role_binding_subjects_null(self_provisioner_rb: ClusterRoleBinding, logger: logging.Logger) -> Dict:
-    logger.debug(f"Patch clusterrolebinding {self_provisioner_rb.name}: 'subjects'= 'null'")
+def set_role_binding_subjects_null(
+    self_provisioner_rb: ClusterRoleBinding,
+) -> Dict:
+    LOGGER.debug(f"Patch clusterrolebinding {self_provisioner_rb.name}: 'subjects'= 'null'")
     ResourceEditor({self_provisioner_rb: {"subjects": "null"}}).update()
 
     return {"res": True, "err": None}
 
 
-def execute_ldap_configuration(config: Dict, logger: logging.Logger) -> Dict:
-    logger.debug("Configuring LDAP")
+def execute_ldap_configuration(
+    config: Dict,
+) -> Dict:
+    LOGGER.debug("Configuring LDAP")
 
     status_dict = {
         "Create LDAP secret": verify_and_execute_configurator(
             func=create_ldap_secret,
             config=config,
-            logger_obj=logger,
             bind_password="bind_password",  # pragma: allowlist secret
         ),
         "Create OAuth": verify_and_execute_configurator(
             func=update_cluster_oath,
             config=config,
-            logger_obj=logger,
             bind_dn_name="bind_dn_name",
             bind_password="bind_password",  # pragma: allowlist secret
             url="url",

@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from pyaml_env.parse_config import yaml
 import pytest
@@ -28,7 +27,7 @@ def kubeconfig_env_variable():
 def day2_config_env_variable(tmp_path):
     path = f"{tmp_path}/day2-config.yaml"
     os.environ["OPENSHIFT_DAY2_CONFIG"] = path
-    yield Path(path)
+    yield path
     del os.environ["OPENSHIFT_DAY2_CONFIG"]
 
 
@@ -66,23 +65,7 @@ def day2_example_config():
     config_path = "day2_configuration.example.yaml"
     os.environ["OPENSHIFT_DAY2_CONFIG"] = config_path
 
-    yield Path(config_path)
-
-
-@pytest.fixture
-def day2_valid_config(tmp_path):
-    day2_config_path = f"{tmp_path}/day2-config.yaml"
-    kubeconfig_path = f"{tmp_path}/kubeconfig"
-    os.environ["OPENSHIFT_DAY2_CONFIG"] = day2_config_path
-
-    with open(day2_config_path, "w") as fd:
-        fd.write(yaml.dump({"configurators": ["ldap"], "kubeconfig": kubeconfig_path}))
-
-    with open(kubeconfig_path, "w") as fd:
-        fd.write("apiVersion: v1\nkind: Config")
-
-    yield Path(day2_config_path)
-    del os.environ["OPENSHIFT_DAY2_CONFIG"]
+    yield config_path
 
 
 def test_missing_day2_configurators_in_config(day2_config_with_missing_configurators):
