@@ -25,7 +25,7 @@ def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: b
     _base_table = base_table()
     day2_config, day2_configurators = get_day2_configs(config_file=config_file)
 
-    if pdb:
+    if pdb or verbose:
         table = execute_configurators(day2_configurators=day2_configurators, table=_base_table, logger=logger)
     else:
         with Progress() as progress:
