@@ -25,14 +25,14 @@ def verify_and_execute_configurator(
             logger_obj.info(task_name)
 
         if kwargs and config and (missing_keys := [_key for _key in kwargs if _key not in config]):
-            if task:
+            if progress and task:
                 progress.update(task, advance=1, description=task_name)
 
             return {"res": False, "err": f"Missing config keys: {missing_keys}"}
 
         res = func(*args, **kwargs)
 
-        if task:
+        if progress and task:
             progress.update(task, advance=1, description=task_name)
 
         return res
@@ -41,7 +41,7 @@ def verify_and_execute_configurator(
         if logger_obj:
             logger_obj.info(ex)
 
-        if task:
+        if progress and task:
             progress.update(task, advance=1, description=task_name)
 
         return {"res": False, "err": str(ex)}
@@ -93,7 +93,7 @@ def execute_configurators(
         for result_str, result_status in _configurators_mappings[configurator_name](
             config=config, logger=logger, progress=progress
         ).items():
-            if progress:
+            if progress and task:
                 progress.update(task, advance=task_progress, refresh=True)
 
             status = "Passed" if result_status["res"] else failed_str
