@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 from typing import Dict
 
-from rich.progress import Progress
+from rich.progress import Progress, TaskID
 from rich.table import Table
 
 from openshift_day2_configurator.configurators.mappings import configurators_mappings
@@ -18,7 +18,7 @@ def execute_configurators(
     failed_str = "[red]Failed[not red]"
     _configurators_mappings = configurators_mappings()
 
-    task: int | None = None
+    task: TaskID | None = None
     if progress:
         task_progress = 1
         task = progress.add_task(
