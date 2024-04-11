@@ -24,11 +24,11 @@ def verify_and_execute_configurator(
         if logger_obj:
             logger_obj.debug(task_name)
 
-        if kwargs and config and (missing_keys := [_key for _key in kwargs if _key not in config]):
+        if kwargs and config and (missing_keys := [_key for _key in kwargs if _key != "logger" and _key not in config]):
             if progress and task is not None:
                 progress.update(task, advance=1, description=task_name)
 
-            return {"res": False, "err": f"Missing config keys: {missing_keys}"}
+            return {task_name: {"res": False, "err": f"Missing config keys: {missing_keys}"}}
 
         res = func(*args, **kwargs)
 
@@ -44,7 +44,7 @@ def verify_and_execute_configurator(
         if progress and task is not None:
             progress.update(task, advance=1, description=task_name)
 
-        return {"res": False, "err": str(ex)}
+        return {task_name: {"res": False, "err": str(ex)}}
 
 
 def base_table() -> Table:
@@ -98,6 +98,6 @@ def execute_configurators(
 
             status = "Passed" if result_status["res"] else failed_str
             reason = "" if result_status["res"] else result_status["err"]
-            table.add_row(configurator_name, result_str, status, reason)
+            table.add_row(configurator_name, result_str.strip(), status, reason)
 
     return table
