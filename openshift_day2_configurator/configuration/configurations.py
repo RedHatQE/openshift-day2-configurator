@@ -6,7 +6,7 @@ from pyaml_env import parse_config
 import rich
 
 
-PRINT_ERROR_PREFIX = "[red]ERROR:[not red]"
+PRINT_ERROR_PREFIX: str = "[red]ERROR:[not red]"
 
 
 def get_day2_configs(config_file: str) -> Tuple[Dict, Dict]:
