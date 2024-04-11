@@ -1,5 +1,6 @@
+from __future__ import annotations
 import logging
-from typing import Dict, Optional
+from typing import Dict
 
 from rich.progress import Progress
 from rich.table import Table
@@ -11,13 +12,13 @@ def execute_configurators(
     day2_configurators: Dict,
     table: Table,
     logger: logging.Logger,
-    progress: Optional[Progress] = None,
-    task_progress: Optional[int] = None,
+    progress: Progress | None = None,
+    task_progress: int | None = None,
 ) -> Table:
     failed_str = "[red]Failed[not red]"
     _configurators_mappings = configurators_mappings()
 
-    task = None
+    task: int | None = None
     if progress:
         task_progress = 1
         task = progress.add_task(
@@ -41,8 +42,8 @@ def execute_configurators(
             if progress and task is not None:
                 progress.update(task, advance=task_progress, refresh=True)
 
-            status = "Passed" if result_status["res"] else failed_str
-            reason = "" if result_status["res"] else result_status["err"]
+            status: str = "Passed" if result_status["res"] else failed_str
+            reason: str = "" if result_status["res"] else result_status["err"]
             table.add_row(configurator_name, result_str.strip(), status, reason)
 
     return table

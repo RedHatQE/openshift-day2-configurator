@@ -1,6 +1,7 @@
+from __future__ import annotations
 import logging
 import shlex
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 from ocp_resources.cluster_role_binding import ClusterRoleBinding
 from ocp_resources.oauth import OAuth
@@ -20,7 +21,7 @@ DISABLE_SELF_PROVISIONERS_TASK_NAME: str = "Disable self provisioners"
 
 def create_ldap_secret(bind_password: str, logger: logging.Logger) -> Dict[str, Dict]:
     logger.debug(CREATE_LDAP_SECRET_TASK_NAME)
-    cmd = shlex.split(
+    cmd: List = shlex.split(
         f"oc create secret generic ldap-secret --from-literal=bindPassword={bind_password} -n openshift-config"
     )
     res, _, err = run_command(command=cmd, check=False)
@@ -79,7 +80,7 @@ def disable_self_provisioners(logger: logging.Logger) -> Dict[str, Dict]:
     self_provisioner_rb = ClusterRoleBinding(name="self-provisioner")
     logger.debug(DISABLE_SELF_PROVISIONERS_TASK_NAME)
 
-    status_dict = {}
+    status_dict: Dict = {}
 
     # TODO: YP - this rolebinding does not exist (tested on AWS-OSD and HCP)
     if self_provisioner_rb.exists:
@@ -125,7 +126,7 @@ def remove_role_binding_from_group(self_provisioner_rb: ClusterRoleBinding, logg
     # unless you prevent reconciliation of this rolebinding using the following command:
     # oc amd comment in cli: oc annotate clusterrolebinding.rbac self-provisioners
     # 'rbac.authorization.kubernetes.io/autoupdate=false' --overwrite --local
-    cmd = shlex.split(
+    cmd: List = shlex.split(
         f"oc adm policy remove-cluster-role-from-group {self_provisioner_rb.name} system:authenticated:oauth"
     )
     res, _, err = run_command(command=cmd, check=False)
@@ -143,11 +144,11 @@ def set_role_binding_subjects_null(self_provisioner_rb: ClusterRoleBinding, logg
     return {"res": True, "err": None}
 
 
-def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: Optional[Progress] = None) -> Dict:
+def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: Progress | None = None) -> Dict:
     logger.debug("Configuring LDAP")
 
-    status_dict = {}
-    total_task = None
+    status_dict: Dict = {}
+    task_id: int | None = None
 
     all_tasks: List[str] = [
         CREATE_LDAP_SECRET_TASK_NAME,
@@ -177,17 +178,17 @@ def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: O
     }
 
     if progress:
-        total_task = progress.add_task(description="  Configuring LDAP", total=len(all_tasks))
+        task_id = progress.add_task(description="  Configuring LDAP", total=len(all_tasks))
 
     for _task, _func, _func_kwargs in zip(all_tasks, all_functions, func_kwargs):
-        _kwargs = {**verify_and_execute_kwargs, **_func_kwargs}
+        _kwargs: Dict = {**verify_and_execute_kwargs, **_func_kwargs}
         status_dict.update(verify_and_execute_configurator(func=_func, task_name=_task, **_kwargs))
 
-        if progress and total_task:
-            progress.update(total_task, advance=1)
+        if progress and task_id is not None:
+            progress.update(task_id, advance=1)
 
-    if progress and total_task:
-        progress.update(total_task, advance=1)
+    if progress and task_id is not None:
+        progress.update(task_id, advance=1)
 
     # TODO: Configure LDAP Groups with Active Directory section
 
