@@ -1,6 +1,6 @@
 import logging
 import shlex
-from typing import Dict, Optional
+from typing import Callable, Dict, List, Optional
 
 from ocp_resources.cluster_role_binding import ClusterRoleBinding
 from ocp_resources.oauth import OAuth
@@ -13,9 +13,9 @@ from openshift_day2_configurator.utils.general import (
 )
 
 
-CREATE_LDAP_SECRET_TASK_NAME = "Create LDAP secret"  # pragma: allowlist secret
-UPDATE_OAUTH_TASK_NAME = "Update OAuth"
-DISABLE_SELF_PROVISIONERS_TASK_NAME = "Disable self provisioners"
+CREATE_LDAP_SECRET_TASK_NAME: str = "Create LDAP secret"  # pragma: allowlist secret
+UPDATE_OAUTH_TASK_NAME: str = "Update OAuth"
+DISABLE_SELF_PROVISIONERS_TASK_NAME: str = "Disable self provisioners"
 
 
 def create_ldap_secret(bind_password: str, logger: logging.Logger) -> Dict[str, Dict]:
@@ -149,14 +149,18 @@ def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: O
     status_dict = {}
     total_task = None
 
-    all_tasks = [
+    all_tasks: List[str] = [
         CREATE_LDAP_SECRET_TASK_NAME,
         UPDATE_OAUTH_TASK_NAME,
         DISABLE_SELF_PROVISIONERS_TASK_NAME,
     ]
 
-    all_functions = [create_ldap_secret, update_cluster_oath, disable_self_provisioners]
-    func_kwargs = [
+    all_functions: List[Callable] = [
+        create_ldap_secret,
+        update_cluster_oath,
+        disable_self_provisioners,
+    ]
+    func_kwargs: List[Dict] = [
         {"bind_password": config.get("bind_password")},
         {
             "bind_dn_name": config.get("bind_dn_name"),
@@ -165,7 +169,7 @@ def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: O
         {},
     ]
 
-    verify_and_execute_kwargs = {
+    verify_and_execute_kwargs: Dict = {
         "config": config,
         "logger_obj": logger,
         "progress": progress,
@@ -177,7 +181,7 @@ def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: O
 
     for _task, _func, _func_kwargs in zip(all_tasks, all_functions, func_kwargs):
         _kwargs = {**verify_and_execute_kwargs, **_func_kwargs}
-        status_dict.update(verify_and_execute_configurator(func=_task, task_name=_func, **_kwargs))
+        status_dict.update(verify_and_execute_configurator(func=_func, task_name=_task, **_kwargs))
 
         if progress and total_task:
             progress.update(total_task, advance=1)

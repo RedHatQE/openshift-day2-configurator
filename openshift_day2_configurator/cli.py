@@ -8,9 +8,9 @@ from simple_logger.logger import get_logger
 
 
 from openshift_day2_configurator.configuration.configurations import get_day2_configs
+from openshift_day2_configurator.configurators.executor import execute_configurators
 from openshift_day2_configurator.utils.general import (
     base_table,
-    execute_configurators,
 )
 
 
