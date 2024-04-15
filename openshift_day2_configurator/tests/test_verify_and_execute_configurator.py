@@ -29,11 +29,11 @@ def test_missing_keys_from_config(function_returns):
         logger_obj=LOGGER,
         key1="key1",
     )
-    assert output["res"] is False
-    assert output["err"] == "Missing config keys: ['key1']"
+    assert output["foo"]["res"] is False
+    assert output["foo"]["err"] == "Missing config keys: ['key1']"
 
 
 def test_function_raises_exception(function_raises):
     output = verify_and_execute_configurator(func=function_raises)
-    assert output["res"] is False
-    assert not output["err"]
+    assert output["foo"]["res"] is False
+    assert not output["foo"]["err"]

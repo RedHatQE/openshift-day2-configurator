@@ -50,7 +50,7 @@ def day2_config_with_non_existing_kubeconfig(day2_config_env_variable):
 
 
 def test_missing_day2_config_file(day2_config_env_variable):
-    with pytest.raises(SystemExit, match="1"):
+    with pytest.raises(FileNotFoundError):
         get_day2_configs(config_file=day2_config_env_variable)
 
 
