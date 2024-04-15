@@ -122,7 +122,7 @@ def set_role_binding_autoupdate_false(self_provisioner_rb: ClusterRoleBinding, l
 def remove_role_binding_from_group(self_provisioner_rb: ClusterRoleBinding, logger: logging.Logger) -> Dict:
     logger.debug(f"Remove role binding {self_provisioner_rb.name} from group system:authenticated:oauth")
     # TODO - YP: the following warning when running the command in the doc:
-    # Warning: Your changes may get lost whenever a master is restarted,
+    # Warning: Your changes may get lost whenever a control plane is restarted,
     # unless you prevent reconciliation of this rolebinding using the following command:
     # oc amd comment in cli: oc annotate clusterrolebinding.rbac self-provisioners
     # 'rbac.authorization.kubernetes.io/autoupdate=false' --overwrite --local
