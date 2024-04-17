@@ -1,8 +1,11 @@
 [tool.coverage.run]
-omit = ["openshift_day2_configuration/tests/*", "openshift_day2_configuration/cli.py"]
+omit = [
+  "openshift_day2_configurator/cli.py",
+  "openshift_day2_configurator/tests/*",
+]
 
 [tool.coverage.report]
-fail_under = 42 # TODO: Need to be at least 60
+fail_under = 55
 skip_empty = true
 
 [tool.coverage.html]
@@ -24,7 +27,7 @@ description = "Tool to configure specific day 2 operations on Openshift"
 authors = ["myakove <myakove@gmail.com>", "rnetser <ruty_n4@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
-packages = [{ include = "openshift_day2_configuration" }]
+packages = [{ include = "openshift_day2_configurator" }]
 repository = "https://github.com/RedHatQE/openshift-day2-configuration"
 homepage = "https://github.com/RedHatQE/openshift-day2-configuration"
 documentation = "https://github.com/RedHatQE/openshift-day2-configuration/blob/main/README.md"
@@ -34,20 +37,28 @@ classifiers = [
 ]
 
 [tool.poetry.scripts]
-openshift-cli-installer = "openshift_day2_configuration:main"
+openshift-day2-configurator = "openshift_day2_configurator.cli:cli_entrypoint"
 
 [tool.poetry.dependencies]
 python = "^3.8"
 pyaml-env = "^1.2.1"
-pyhelper-utils = "^0.0.4"
 python-simple-logger = "^1.0.19"
-openshift-python-wrapper = "^10.0.29"
 rich = "^13.7.1"
+click = "^8.1.7"
+openshift-python-wrapper = "^10.0.30"
+openshift-python-utilities = "^5.0.35"
+pyhelper-utils = "^0.0.8"
 
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
 ipython = "*"
+
+
+[tool.poetry.group.tests.dependencies]
+pytest-cov = "^5.0.0"
+pytest-mock = "^3.14.0"
+pytest = "^8.1.1"
 
 [tool.poetry-dynamic-versioning]
 enable = true
