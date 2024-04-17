@@ -1,0 +1,11 @@
+kubeconfig: !ENV "${HOME}/kubeconfig"
+output_log_file: /tmp/openshift-day2-configuration.log
+
+configurators:
+    ldap:
+        bind_dn_name: <name>
+        bind_password: <password>
+        idp_name: ldap
+        url: "ldap://1.1.1.:389/cn=Users,dc=octopus,dc=local?sAMAccountName"
+    ingress:
+        domain: <ocp.customer.domain.com>
