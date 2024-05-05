@@ -6,7 +6,7 @@ configurators:
         bind_dn_name: <name>
         bind_password: <password>
         idp_name: ldap
-        url: "ldap://1.1.1.:389/cn=Users,dc=octopus,dc=local?sAMAccountName"
+        url: "ldap://1.1.1.1:389/cn=Users,dc=octopus,dc=local?sAMAccountName"
         group_syncer_name: ldap-group-syncer
         group_syncer_namespace: ldap-sync
         group_syncer_whitelist:
