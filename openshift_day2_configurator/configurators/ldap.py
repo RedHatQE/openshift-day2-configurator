@@ -11,6 +11,7 @@ from ocp_resources.namespace import Namespace
 from ocp_resources.oauth import OAuth
 from ocp_resources.resource import ResourceEditor
 from ocp_resources.service_account import ServiceAccount
+from ocp_resources.sealed_secret import SealedSecret
 from pyhelper_utils.shell import run_command
 from rich.progress import Progress, TaskID
 
@@ -190,7 +191,8 @@ def create_ldap_groups_sync_cluster_role_binding(
 
 def create_ldap_groups_sync_service_account(name: str, service_account_namespace: str, logger: logging.Logger):
     return create_ocp_resource(
-        ocp_resource=ServiceAccount(name=name, namespace=service_account_namespace), logger=logger
+        ocp_resource=ServiceAccount(name=name, namespace=service_account_namespace),
+        logger=logger,
     )
 
 
@@ -280,15 +282,20 @@ def create_ldap_groups_sync_cron_job(
 def create_ldap_groups_sync_secret(
     name: str,
     group_syncer_namespace: str,
-    sealed_sync_secret: str,
+    sealed_sync_secret_encrypted_data: str,
     logger: logging.Logger,
 ):
     return create_ocp_resource(
-        ocp_resource=SealedSecret(  # noqa F821  TODO: add SealedSecret resource
+        ocp_resource=SealedSecret(
             name=name,
             namespace=group_syncer_namespace,
-            data_dict={"sync.yaml": sealed_sync_secret},
-            type="encryptedData",
+            encrypted_data={"sync.yaml": sealed_sync_secret_encrypted_data},
+            template={
+                "metadata": {
+                    "name": group_syncer_namespace,
+                    "namespace": group_syncer_namespace,
+                }
+            },
         ),
         logger=logger,
     )
@@ -310,6 +317,8 @@ def create_ldap_groups_sync(
     group_syncer_schedule: str,
     concurrency_policy: str,
     sealed_sync_secret: str,
+    sealed_sync_secret_encrypted_data: str,
+    sealed_sync_secret_encrypted_template: str,
     logger: logging.Logger,
 ):
     service_account_namespace = "openshift-authentication"
@@ -341,7 +350,7 @@ def create_ldap_groups_sync(
         "Create LDAP groups sync Secret": create_ldap_groups_sync_secret(
             name=sealed_sync_secret,
             group_syncer_namespace=group_syncer_namespace,
-            sealed_sync_secret=sealed_sync_secret,
+            sealed_sync_secret_encrypted_data=sealed_sync_secret_encrypted_data,
             logger=logger,
         ),
         "Create LDAP groups sync CronJob": create_ldap_groups_sync_cron_job(
@@ -388,6 +397,8 @@ def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: P
                 "group_syncer_schedule": config.get("group_syncer_schedule"),
                 "concurrency_policy": config.get("group_syncer_concurrency_policy"),
                 "sealed_sync_secret": config.get("sealed_sync_secret"),
+                "sealed_sync_secret_encrypted_data": config.get("sealed_sync_secret_encrypted_data"),
+                "sealed_sync_secret_encrypted_template": config.get("sealed_sync_secret_encrypted_template"),
             },
         },
     }
