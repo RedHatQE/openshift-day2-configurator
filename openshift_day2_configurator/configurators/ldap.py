@@ -316,9 +316,8 @@ def create_ldap_groups_sync(
     group_syncer_whitelist: str,
     group_syncer_schedule: str,
     concurrency_policy: str,
-    sealed_sync_secret: str,
+    sealed_sync_secret_name: str,
     sealed_sync_secret_encrypted_data: str,
-    sealed_sync_secret_encrypted_template: str,
     logger: logging.Logger,
 ):
     service_account_namespace = "openshift-authentication"
@@ -348,7 +347,7 @@ def create_ldap_groups_sync(
             logger=logger,
         ),
         "Create LDAP groups sync Secret": create_ldap_groups_sync_secret(
-            name=sealed_sync_secret,
+            name=sealed_sync_secret_name,
             group_syncer_namespace=group_syncer_namespace,
             sealed_sync_secret_encrypted_data=sealed_sync_secret_encrypted_data,
             logger=logger,
@@ -396,9 +395,8 @@ def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: P
                 "group_syncer_whitelist": config.get("group_syncer_whitelist", ""),
                 "group_syncer_schedule": config.get("group_syncer_schedule"),
                 "concurrency_policy": config.get("group_syncer_concurrency_policy"),
-                "sealed_sync_secret": config.get("sealed_sync_secret"),
+                "sealed_sync_secret_name": config.get("sealed_sync_secret_name"),
                 "sealed_sync_secret_encrypted_data": config.get("sealed_sync_secret_encrypted_data"),
-                "sealed_sync_secret_encrypted_template": config.get("sealed_sync_secret_encrypted_template"),
             },
         },
     }
