@@ -11,4 +11,5 @@ ignore:
  - ".github/in-solidarity.yml"  # default
  - ".github/workflows/*.yml"
  - "**/*.yml"
- - "app/manifests/install-config-template.j2"
+ - "day2_configuration.example.yaml"
+ - "openshift_day2_configurator/configurators/ldap.py"

@@ -6,6 +6,16 @@ configurators:
         bind_dn_name: <name>
         bind_password: <password>
         idp_name: ldap
-        url: "ldap://1.1.1.:389/cn=Users,dc=octopus,dc=local?sAMAccountName"
+        url: "ldap://1.1.1.1:389/cn=Users,dc=octopus,dc=local?sAMAccountName"
+        group_syncer_name: ldap-group-syncer
+        group_syncer_namespace: ldap-sync
+        group_syncer_whitelist:
+            CN=ocp-p-admins,OU=prod,OU=Openshift,OU=Security,OU=Groups,OU=Global Prod Resources,OU=Prod Environments,OU=Organization-Root,DC=organization,DC=org,DC=il
+            CN=ocp-p-online,OU=prod,OU=Openshift,OU=Security,OU=Groups,OU=Global Prod Resources,OU=Prod Environments,OU=Organization-Root,DC=organization,DC=org,DC=il
+        group_syncer_schedule: "*/5 * * * *"
+        concurrency_policy: Forbid
+        sealed_sync_secret_name: ocp-sealed-secrets-sync-secret  # pragma: allowlist secret`
+        sealed_sync_secret_encrypted_data: "xxxxx"  # pragma: allowlist secret`
+
     ingress:
         domain: <ocp.customer.domain.com>
