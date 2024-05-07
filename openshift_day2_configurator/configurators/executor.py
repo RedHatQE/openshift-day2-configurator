@@ -1,7 +1,8 @@
 from __future__ import annotations
 import logging
-from typing import Dict
+from typing import Any, Dict
 
+from kubernetes.dynamic import DynamicClient
 from rich.progress import Progress, TaskID
 from rich.table import Table
 
@@ -9,9 +10,10 @@ from openshift_day2_configurator.configurators.mappings import configurators_map
 
 
 def execute_configurators(
-    day2_configurators: Dict,
+    day2_configurators: Dict[str, Any],
     table: Table,
     logger: logging.Logger,
+    client: DynamicClient,
     progress: Progress | None = None,
     task_progress: int | None = None,
 ) -> Table:
@@ -37,7 +39,7 @@ def execute_configurators(
             continue
 
         for result_str, result_status in _configurators_mappings[configurator_name](
-            config=config, logger=logger, progress=progress
+            config=config, logger=logger, progress=progress, client=client
         ).items():
             if progress and task is not None:
                 progress.update(task, advance=task_progress, refresh=True)

@@ -35,7 +35,7 @@ def test_create_new_resource(mocked_resource):
     mocked_resource.exists = False
     assert create_ocp_resource(ocp_resource=mocked_resource, logger=LOGGER) == {
         "res": True,
-        "err": None,
+        "err": "",
     }
 
 

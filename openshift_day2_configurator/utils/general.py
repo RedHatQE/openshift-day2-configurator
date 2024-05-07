@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from typing import Callable, Dict
+from typing import Any, Dict
 
 from rich import box
 from rich.progress import Progress
@@ -8,14 +8,14 @@ from rich.table import Table
 
 
 def verify_and_execute_configurator(
-    func: Callable,
-    config: Dict | None = None,
+    func: Any,
+    config: Dict[str, Any] | None = None,
     logger_obj: logging.Logger | None = None,
     progress: Progress | None = None,
     task_name: str | None = None,
-    *args,
-    **kwargs,
-) -> Dict[str, Dict]:
+    *args: Any,
+    **kwargs: Any,
+) -> Dict[str, Dict[str, str | bool]]:
     task_name = f"    {task_name}" if task_name else func.__name__
     task = progress.add_task(task_name, total=1) if progress else None
 
