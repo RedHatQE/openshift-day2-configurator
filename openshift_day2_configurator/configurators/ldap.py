@@ -1,22 +1,29 @@
 from __future__ import annotations
 import logging
 import shlex
-from typing import Callable, Dict, List
+from typing import Any, Dict, List
 
+from ocp_resources.cluster_role import ClusterRole
 from ocp_resources.cluster_role_binding import ClusterRoleBinding
+from ocp_resources.configmap import ConfigMap
+from ocp_resources.cron_job import CronJob
+from ocp_resources.namespace import Namespace
 from ocp_resources.oauth import OAuth
 from ocp_resources.resource import ResourceEditor
+from ocp_resources.service_account import ServiceAccount
+from ocp_resources.sealed_secret import SealedSecret
 from pyhelper_utils.shell import run_command
-from rich.progress import Progress
+from rich.progress import Progress, TaskID
 
 from openshift_day2_configurator.utils.general import (
     verify_and_execute_configurator,
 )
-
+from openshift_day2_configurator.utils.resources import create_ocp_resource
 
 CREATE_LDAP_SECRET_TASK_NAME: str = "Create LDAP secret"  # pragma: allowlist secret
 UPDATE_OAUTH_TASK_NAME: str = "Update OAuth"
 DISABLE_SELF_PROVISIONERS_TASK_NAME: str = "Disable self provisioners"
+CREATE_LDAP_GROUPS_SYNC: str = "Create LDAP groups sync"
 
 
 def create_ldap_secret(bind_password: str, logger: logging.Logger) -> Dict[str, Dict]:
@@ -144,31 +151,255 @@ def set_role_binding_subjects_null(self_provisioner_rb: ClusterRoleBinding, logg
     return {"res": True, "err": None}
 
 
+def create_ldap_groups_sync_cluster_role(name: str, logger: logging.Logger):
+    return create_ocp_resource(
+        ocp_resource=ClusterRole(
+            name=name,
+            rules=[
+                {
+                    "apiGroups": ["", "user.openshift.io"],
+                    "resources": ["groups"],
+                    "verbs": ["get", "list", "create", "update"],
+                }
+            ],
+        ),
+        logger=logger,
+    )
+
+
+def create_ldap_groups_sync_cluster_role_binding(
+    name: str,
+    service_account_name: str,
+    service_account_namespace: str,
+    logger: logging.Logger,
+):
+    return create_ocp_resource(
+        ocp_resource=ClusterRoleBinding(
+            name=name,
+            cluster_role=service_account_name,
+            subjects=[
+                {
+                    "kind": "ServiceAccount",
+                    "name": service_account_name,
+                    "namespace": service_account_namespace,
+                }
+            ],
+        ),
+        logger=logger,
+    )
+
+
+def create_ldap_groups_sync_service_account(name: str, service_account_namespace: str, logger: logging.Logger):
+    return create_ocp_resource(
+        ocp_resource=ServiceAccount(name=name, namespace=service_account_namespace),
+        logger=logger,
+    )
+
+
+def create_ldap_groups_sync_config_map(name: str, group_syncer_namespace: str, whitelist: str, logger: logging.Logger):
+    return create_ocp_resource(
+        ocp_resource=ConfigMap(
+            name=name,
+            namespace=group_syncer_namespace,
+            data={"whitelist.txt": whitelist},
+        ),
+        logger=logger,
+    )
+
+
+def create_ldap_groups_sync_cron_job(
+    name: str,
+    config_map_name: str,
+    group_syncer_namespace: str,
+    schedule: str,
+    concurrency_policy: str,
+    logger: logging.Logger,
+):
+    job_template = {
+        "spec": {
+            "backoffLimit": 0,
+            "ttlSecondsAfterFinished": 1800,
+            "template": {
+                "spec": {
+                    "containers": [
+                        {
+                            "name": name,
+                            "image": "docker.jfrog-art-int/openshift/ose-cli:latest",
+                            "command": [
+                                "/bin/bash",
+                                "-c",
+                                "oc adm groups sync --whitelist=/etc/whitelist/whitelist.txt --sync-config=/etc/config/sync.yaml --confirm",
+                            ],
+                            "volumeMounts": [
+                                {
+                                    "mountPath": "/etc/config",
+                                    "name": "ldap-sync-volume",
+                                },
+                                {"mountPath": "/etc/ldap-ca", "name": "ldap-ca"},
+                                {
+                                    "mountPath": "/etc/whitelist",
+                                    "name": "ldap-sync-volume-whitelist",
+                                },
+                            ],
+                        }
+                    ],
+                    "volumes": [
+                        {
+                            "name": "ldap-sync-volume",
+                            "secret": {"secretName": name},
+                        },
+                        {
+                            "name": "ldap-ca",
+                            "configMap": {"name": "ca-config-map"},
+                        },  # TODO: add ldap ca sa
+                        {
+                            "name": "ldap-sync-volume-whitelist",
+                            "configMap": {"name": config_map_name},
+                        },
+                    ],
+                    "restartPolicy": "Never",
+                    "terminationGracePeriodSeconds": 30,
+                    "activeDeadlineSeconds": 500,
+                    "dnsPolicy": "ClusterFirst",
+                    "serviceAccountName": name,
+                }
+            },
+        }
+    }
+
+    return create_ocp_resource(
+        ocp_resource=CronJob(
+            name=name,
+            namespace=group_syncer_namespace,
+            schedule=schedule,
+            concurrency_policy=concurrency_policy,
+            job_template=job_template,
+        ),
+        logger=logger,
+    )
+
+
+def create_ldap_groups_sync_secret(
+    name: str,
+    group_syncer_namespace: str,
+    sealed_sync_secret_encrypted_data: str,
+    logger: logging.Logger,
+):
+    return create_ocp_resource(
+        ocp_resource=SealedSecret(
+            name=name,
+            namespace=group_syncer_namespace,
+            encrypted_data={"sync.yaml": sealed_sync_secret_encrypted_data},
+            template={
+                "metadata": {
+                    "name": group_syncer_namespace,
+                    "namespace": group_syncer_namespace,
+                }
+            },
+        ),
+        logger=logger,
+    )
+
+
+def create_ldap_groups_sync_namespace(group_syncer_namespace, logger):
+    return create_ocp_resource(
+        ocp_resource=Namespace(
+            name=group_syncer_namespace,
+        ),
+        logger=logger,
+    )
+
+
+def create_ldap_groups_sync(
+    group_syncer_name: str,
+    group_syncer_namespace: str,
+    group_syncer_whitelist: str,
+    group_syncer_schedule: str,
+    concurrency_policy: str,
+    sealed_sync_secret_name: str,
+    sealed_sync_secret_encrypted_data: str,
+    logger: logging.Logger,
+):
+    service_account_namespace = "openshift-authentication"
+    config_map_name = f"{group_syncer_name}-whitelist" if "whitelist" not in group_syncer_name else group_syncer_name
+    status_dict = {
+        "Create LDAP groups sync ClusterRole": create_ldap_groups_sync_cluster_role(
+            name=group_syncer_name, logger=logger
+        ),
+        "Create LDAP groups sync ClusterRoleBinding": create_ldap_groups_sync_cluster_role_binding(
+            name=group_syncer_name,
+            service_account_name=group_syncer_name,
+            service_account_namespace=service_account_namespace,
+            logger=logger,
+        ),
+        "Create LDAP group sync Namespace": create_ldap_groups_sync_namespace(
+            group_syncer_namespace=group_syncer_namespace, logger=logger
+        ),
+        "Create LDAP groups sync ServiceAccount": create_ldap_groups_sync_service_account(
+            name=group_syncer_name,
+            service_account_namespace=service_account_namespace,
+            logger=logger,
+        ),
+        "Create LDAP groups sync ConfigMap": create_ldap_groups_sync_config_map(
+            name=config_map_name,
+            group_syncer_namespace=group_syncer_namespace,
+            whitelist=group_syncer_whitelist,
+            logger=logger,
+        ),
+        "Create LDAP groups sync Secret": create_ldap_groups_sync_secret(
+            name=sealed_sync_secret_name,
+            group_syncer_namespace=group_syncer_namespace,
+            sealed_sync_secret_encrypted_data=sealed_sync_secret_encrypted_data,
+            logger=logger,
+        ),
+        "Create LDAP groups sync CronJob": create_ldap_groups_sync_cron_job(
+            name=group_syncer_name,
+            config_map_name=config_map_name,
+            group_syncer_namespace=group_syncer_namespace,
+            schedule=group_syncer_schedule,
+            concurrency_policy=concurrency_policy,
+            logger=logger,
+        ),
+    }
+
+    return status_dict
+
+
 def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: Progress | None = None) -> Dict:
     logger.debug("Configuring LDAP")
 
     status_dict: Dict = {}
-    task_id: int | None = None
+    task_id: TaskID | None = None
 
-    all_tasks: List[str] = [
-        CREATE_LDAP_SECRET_TASK_NAME,
-        UPDATE_OAUTH_TASK_NAME,
-        DISABLE_SELF_PROVISIONERS_TASK_NAME,
-    ]
-
-    all_functions: List[Callable] = [
-        create_ldap_secret,
-        update_cluster_oath,
-        disable_self_provisioners,
-    ]
-    func_kwargs: List[Dict] = [
-        {"bind_password": config.get("bind_password")},
-        {
-            "bind_dn_name": config.get("bind_dn_name"),
-            "url": config.get("url"),
+    tasks_dict: Dict[str, Dict[str, Any]] = {
+        CREATE_LDAP_SECRET_TASK_NAME: {
+            "func": create_ldap_secret,
+            "func_kwargs": {"bind_password": config.get("bind_password")},
         },
-        {},
-    ]
+        UPDATE_OAUTH_TASK_NAME: {
+            "func": update_cluster_oath,
+            "func_kwargs": {
+                "bind_dn_name": config.get("bind_dn_name"),
+                "url": config.get("url"),
+            },
+        },
+        DISABLE_SELF_PROVISIONERS_TASK_NAME: {
+            "func": disable_self_provisioners,
+            "func_kwargs": {},
+        },
+        CREATE_LDAP_GROUPS_SYNC: {
+            "func": create_ldap_groups_sync,
+            "func_kwargs": {
+                "group_syncer_name": config.get("group_syncer_name"),
+                "group_syncer_namespace": config.get("group_syncer_namespace"),
+                "group_syncer_whitelist": config.get("group_syncer_whitelist", ""),
+                "group_syncer_schedule": config.get("group_syncer_schedule"),
+                "concurrency_policy": config.get("group_syncer_concurrency_policy"),
+                "sealed_sync_secret_name": config.get("sealed_sync_secret_name"),
+                "sealed_sync_secret_encrypted_data": config.get("sealed_sync_secret_encrypted_data"),
+            },
+        },
+    }
 
     verify_and_execute_kwargs: Dict = {
         "config": config,
@@ -178,18 +409,16 @@ def execute_ldap_configuration(config: Dict, logger: logging.Logger, progress: P
     }
 
     if progress:
-        task_id = progress.add_task(description="  Configuring LDAP", total=len(all_tasks))
+        task_id = progress.add_task(description="  Configuring LDAP", total=len(tasks_dict))
 
-    for _task, _func, _func_kwargs in zip(all_tasks, all_functions, func_kwargs):
-        _kwargs: Dict = {**verify_and_execute_kwargs, **_func_kwargs}
-        status_dict.update(verify_and_execute_configurator(func=_func, task_name=_task, **_kwargs))
+    for _task, _func_config in tasks_dict.items():
+        _kwargs: Dict = {**verify_and_execute_kwargs, **_func_config["func_kwargs"]}
+        status_dict.update(verify_and_execute_configurator(func=_func_config["func"], task_name=_task, **_kwargs))
 
         if progress and task_id is not None:
             progress.update(task_id, advance=1)
 
     if progress and task_id is not None:
         progress.update(task_id, advance=1)
-
-    # TODO: Configure LDAP Groups with Active Directory section
 
     return status_dict
