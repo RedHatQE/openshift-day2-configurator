@@ -82,6 +82,7 @@ def test_day2_config_failed_client(day2_valid_config):
 
 
 def test_day2_config_success(valid_setup):
-    config, configurators = get_day2_configs(config_file=valid_setup)
+    config, configurators, client = get_day2_configs(config_file=valid_setup)
     assert config
     assert configurators
+    assert client

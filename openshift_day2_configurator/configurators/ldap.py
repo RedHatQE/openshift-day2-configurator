@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import base64
 import logging
 import shlex
 from typing import Any, Dict, List
@@ -11,6 +13,7 @@ from ocp_resources.cron_job import CronJob
 from ocp_resources.namespace import Namespace
 from ocp_resources.oauth import OAuth
 from ocp_resources.resource import ResourceEditor
+from ocp_resources.secret import Secret
 from ocp_resources.service_account import ServiceAccount
 from ocp_resources.sealed_secret import SealedSecret
 from pyhelper_utils.shell import run_command
@@ -27,17 +30,27 @@ DISABLE_SELF_PROVISIONERS_TASK_NAME: str = "Disable self provisioners"
 CREATE_LDAP_GROUPS_SYNC: str = "Create LDAP groups sync"
 
 
-def create_ldap_secret(bind_password: str, logger: logging.Logger) -> Dict[str, Dict[str, str]]:
+def create_ldap_secret(
+    bind_password: str,
+    logger: logging.Logger,
+    client: DynamicClient,
+) -> Dict[str, Dict[str, str]]:
     logger.debug(CREATE_LDAP_SECRET_TASK_NAME)
-    cmd: List[str] = shlex.split(
-        f"oc create secret generic ldap-secret --from-literal=bindPassword={bind_password} -n openshift-config"
-    )
-    res, _, err = run_command(command=cmd, check=False)
 
-    if not res:
-        logger.debug(f"Failed to create LDAP secret with error {err}")
-
-    return {CREATE_LDAP_SECRET_TASK_NAME: {"res": res, "err": err}}
+    return {
+        CREATE_LDAP_SECRET_TASK_NAME: create_ocp_resource(
+            ocp_resource=Secret(
+                client=client,
+                name="ldap-secret",
+                namespace="openshift-config",
+                data_dict={
+                    "bindPassword": base64.b64encode(bind_password.encode()).decode(),
+                },
+                type="Opaque",
+            ),
+            logger=logger,
+        )
+    }
 
 
 def update_cluster_oath(
@@ -148,7 +161,7 @@ def remove_role_binding_from_group(
     if not res:
         logger.debug(f"Failed to remove role binding {self_provisioner_rb.name} with error {err}")
 
-    return {"res": res, "err": err}
+    return {"res": res, "err": err.strip()}
 
 
 def set_role_binding_subjects_null(
@@ -161,8 +174,11 @@ def set_role_binding_subjects_null(
 
 
 def create_ldap_groups_sync_cluster_role(
-    name: str, logger: logging.Logger, client: DynamicClient
+    name: str,
+    logger: logging.Logger,
+    client: DynamicClient,
 ) -> Dict[str, str | bool]:
+    logger.debug(f"Create LDAP groups sync cluster role {name}")
     return create_ocp_resource(
         ocp_resource=ClusterRole(
             client=client,
@@ -186,6 +202,7 @@ def create_ldap_groups_sync_cluster_role_binding(
     logger: logging.Logger,
     client: DynamicClient,
 ) -> Dict[str, str | bool]:
+    logger.debug(f"Create LDAP groups sync cluster role binding {name}")
     return create_ocp_resource(
         ocp_resource=ClusterRoleBinding(
             client=client,
@@ -209,6 +226,7 @@ def create_ldap_groups_sync_service_account(
     logger: logging.Logger,
     client: DynamicClient,
 ) -> Dict[str, str | bool]:
+    logger.debug(f"Create LDAP groups sync service account {name}")
     return create_ocp_resource(
         ocp_resource=ServiceAccount(client=client, name=name, namespace=service_account_namespace),
         logger=logger,
@@ -222,6 +240,7 @@ def create_ldap_groups_sync_config_map(
     logger: logging.Logger,
     client: DynamicClient,
 ) -> Dict[str, str | bool]:
+    logger.debug(f"Create LDAP groups sync config map {name}")
     return create_ocp_resource(
         ocp_resource=ConfigMap(
             client=client,
@@ -242,6 +261,7 @@ def create_ldap_groups_sync_cron_job(
     logger: logging.Logger,
     client: DynamicClient,
 ) -> Dict[str, str | bool]:
+    logger.debug(f"Create LDAP groups sync cron job {name}")
     job_template = {
         "spec": {
             "backoffLimit": 0,
@@ -314,26 +334,34 @@ def create_ldap_groups_sync_secret(
     logger: logging.Logger,
     client: DynamicClient,
 ) -> Dict[str, str | bool]:
-    return create_ocp_resource(
-        ocp_resource=SealedSecret(
-            client=client,
-            name=name,
-            namespace=group_syncer_namespace,
-            encrypted_data={"sync.yaml": sealed_sync_secret_encrypted_data},
-            template={
-                "metadata": {
-                    "name": group_syncer_namespace,
-                    "namespace": group_syncer_namespace,
-                }
-            },
-        ),
-        logger=logger,
-    )
+    logger.debug(f"Create LDAP groups sync secret {name}")
+
+    try:
+        return create_ocp_resource(
+            ocp_resource=SealedSecret(
+                client=client,
+                name=name,
+                namespace=group_syncer_namespace,
+                encrypted_data={"sync.yaml": sealed_sync_secret_encrypted_data},
+                template={
+                    "metadata": {
+                        "name": group_syncer_namespace,
+                        "namespace": group_syncer_namespace,
+                    }
+                },
+            ),
+            logger=logger,
+        )
+
+    except Exception as ex:
+        logger.debug(f"Failed to create SealedSecret {name} with error {ex}")
+        return {"res": False, "err": str(ex)}
 
 
 def create_ldap_groups_sync_namespace(
     group_syncer_namespace: str, logger: logging.Logger, client: DynamicClient
 ) -> Dict[str, str | bool]:
+    logger.debug(f"Create LDAP groups sync namespace {group_syncer_namespace}")
     return create_ocp_resource(
         ocp_resource=Namespace(
             client=client,
@@ -422,7 +450,10 @@ def execute_ldap_configuration(
     tasks_dict = {
         CREATE_LDAP_SECRET_TASK_NAME: {
             "func": create_ldap_secret,
-            "func_kwargs": {"bind_password": config.get("bind_password")},
+            "func_kwargs": {
+                "bind_password": config.get("bind_password"),
+                "client": client,
+            },
         },
         UPDATE_OAUTH_TASK_NAME: {
             "func": update_cluster_oath,
@@ -434,7 +465,7 @@ def execute_ldap_configuration(
         },
         DISABLE_SELF_PROVISIONERS_TASK_NAME: {
             "func": disable_self_provisioners,
-            "func_kwargs": {},
+            "func_kwargs": {"client": client},
         },
         CREATE_LDAP_GROUPS_SYNC: {
             "func": create_ldap_groups_sync,
@@ -446,6 +477,7 @@ def execute_ldap_configuration(
                 "concurrency_policy": config.get("group_syncer_concurrency_policy"),
                 "sealed_sync_secret_name": config.get("sealed_sync_secret_name"),
                 "sealed_sync_secret_encrypted_data": config.get("sealed_sync_secret_encrypted_data"),
+                "client": client,
             },
         },
     }

@@ -22,7 +22,7 @@ configurators:
       - `{task_name: {"func": <function_name>, "func_kwargs": <function_kwargs>}}`
     - See [ldap.py](../openshift_day2_configurator/configurators/ldap.py) for an example.
   - Each task function should return a dictionary with the following structure:
-    - {"res": True, "err": ""} - on success
-    - {"res": False, "err": str(ex)} - on failure
+    - {"task_name": {"res": True, "err": ""}} - on success
+    - {"task_name": {"res": False, "err": str(ex)}} - on failure
 - Add the new module to [configurators_mappings.py](../openshift_day2_configurator/configurators/mappings/configurators_mappings.py)
   under `configurators_mappings` dictionary.

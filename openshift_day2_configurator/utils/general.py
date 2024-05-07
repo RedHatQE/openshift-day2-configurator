@@ -23,7 +23,11 @@ def verify_and_execute_configurator(
         if logger_obj:
             logger_obj.debug(task_name)
 
-        if kwargs and config and (missing_keys := [_key for _key in kwargs if _key != "logger" and _key not in config]):
+        if (
+            kwargs
+            and config
+            and (missing_keys := [_key for _key in kwargs if _key not in ("logger", "client") and _key not in config])
+        ):
             if progress and task is not None:
                 progress.update(task, advance=1, description=task_name)
 
