@@ -12,7 +12,7 @@ def create_ocp_resource(ocp_resource: Any, logger: logging.Logger) -> Dict[str, 
         else:
             logger.debug(f"Create LDAP groups sync cluster role {name}")
             ocp_resource.deploy()
-            return {"res": True, "err": None}
+            return {"res": True, "err": ""}
 
     except Exception as ex:
         _ex: str = str(ex) if isinstance(ex, Exception) else ex.__repr__()
