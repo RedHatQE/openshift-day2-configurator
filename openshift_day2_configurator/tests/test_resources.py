@@ -7,7 +7,7 @@ from simple_logger.logger import get_logger
 from openshift_day2_configurator.utils.resources import create_ocp_resource
 
 
-LOGGER = get_logger(name="test-configurator")
+LOGGER = get_logger(name="test-resources")
 
 
 class MockedResource(Resource):
