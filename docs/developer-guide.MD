@@ -28,7 +28,7 @@ configurators:
   under `configurators_mappings` dictionary.
 
 # Tests
-#### Run day2 configurator tests:
+#### Run day2 configurator tool tests:
 ```bash
 poetry run pytest openshift_day2_configurator/tests
 ```
