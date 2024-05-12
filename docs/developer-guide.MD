@@ -26,6 +26,8 @@ configurators:
     - {"task_name": {"res": False, "err": str(ex)}} - on failure
 - Add the new module to [configurators_mappings.py](../openshift_day2_configurator/configurators/mappings/configurators_mappings.py)
   under `configurators_mappings` dictionary.
+- Add tests under `openshift_day2_configurator/tests` to cover the new module.
+
 
 # Tests
 #### Run day2 configurator tool tests:
