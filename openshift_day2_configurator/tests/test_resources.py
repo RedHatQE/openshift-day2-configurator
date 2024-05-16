@@ -7,7 +7,7 @@ from simple_logger.logger import get_logger
 from openshift_day2_configurator.utils.resources import create_ocp_resource
 
 
-LOGGER = get_logger(name="test-configurator")
+LOGGER = get_logger(name="test-resources")
 
 
 class MockedResource(Resource):
@@ -35,7 +35,7 @@ def test_create_new_resource(mocked_resource):
     mocked_resource.exists = False
     assert create_ocp_resource(ocp_resource=mocked_resource, logger=LOGGER) == {
         "res": True,
-        "err": None,
+        "err": "",
     }
 
 

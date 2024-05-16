@@ -1,9 +1,12 @@
 import os
 
-from pyaml_env.parse_config import yaml
+from pyaml_env.parse_config import parse_config, yaml
 import pytest
 
-from openshift_day2_configurator.configuration.configurations import get_day2_configs
+from openshift_day2_configurator.configuration.configurations import (
+    get_day2_configs,
+    verify_and_set_kubeconfig_and_client,
+)
 
 pytestmark = pytest.mark.usefixtures("no_kubeconfig_env_variable")
 
@@ -49,6 +52,11 @@ def day2_config_with_non_existing_kubeconfig(day2_config_env_variable):
     yield day2_config_env_variable
 
 
+@pytest.fixture
+def valid_setup_dict(valid_setup):
+    return parse_config(valid_setup)
+
+
 def test_missing_day2_config_file(day2_config_env_variable):
     with pytest.raises(FileNotFoundError):
         get_day2_configs(config_file=day2_config_env_variable)
@@ -82,6 +90,11 @@ def test_day2_config_failed_client(day2_valid_config):
 
 
 def test_day2_config_success(valid_setup):
-    config, configurators = get_day2_configs(config_file=valid_setup)
+    config, configurators, client = get_day2_configs(config_file=valid_setup)
     assert config
     assert configurators
+    assert client
+
+
+def test_verify_and_set_kubeconfig_and_valid_client(valid_setup_dict):
+    assert verify_and_set_kubeconfig_and_client(config=valid_setup_dict)

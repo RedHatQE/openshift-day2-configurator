@@ -37,12 +37,12 @@ repos:
           ]
 
   - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0
+    rev: v1.5.0
     hooks:
       - id: detect-secrets
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.2
+    rev: v0.4.4
     hooks:
       - id: ruff
         args: [--fix]
@@ -54,7 +54,7 @@ repos:
       - id: gitleaks
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 37.329.0
+    rev: 37.358.0
     hooks:
       - id: renovate-config-validator
 
@@ -62,5 +62,5 @@ repos:
     rev: v1.10.0
     hooks:
       - id: mypy
-        exclude: ^(tests/)
+        exclude: ^(openshift_day2_configurator/tests/)
         additional_dependencies: [types-all]
