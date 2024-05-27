@@ -169,7 +169,7 @@ def create_ingress_certificate_configmap(
                 name=INGRESS_CERTIFICATE_CONFIGMAP_NAME,
                 namespace="openshift-config",
                 data={
-                    "ca-bundle.crt": base64.b64encode(ingress_certificate.encode()).decode(),
+                    "ca-bundle.crt": ingress_certificate,
                 },
             ),
             logger=logger,
