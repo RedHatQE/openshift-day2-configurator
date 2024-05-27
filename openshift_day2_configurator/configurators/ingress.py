@@ -26,10 +26,11 @@ from openshift_day2_configurator.utils.resources import create_ocp_resource
 
 CREATE_NEW_INGRESS_CERTIFICATE: str = "Create new Ingress certificate"
 CREATE_INGRESS_CERTIFICATE_CONFIGMAP: str = "Create ConfigMap with the new Ingress certificate"
-UPDATE_CLUSTER_PROXY_TRUSTED_CA: str = "Update cluster Proxy with the Ingress certificate"
+UPDATE_CLUSTER_PROXY_TRUSTED_CA: str = "Update cluster Proxy with the new Ingress certificate"
 CREATE_WILDCARD_CERTIFICATE_TLS_SECRET: str = "Create wildcard certificate tls secret"
 UPDATE_INGRESS_CONTROLLER_CERTIFICATE: str = "Update the IngressController certificate"
-WAIT_ON_INGRESS_PODS_RESCHEDULE: str = "Wait on Ingress pods reschedule"
+WAIT_ON_INGRESS_PODS_RESCHEDULE: str = "Wait on Ingress pods to reschedule"
+
 OPENSHIFT_INGRESS_NAMESPACE: str = "openshift-ingress"
 INGRESS_CERTIFICATE_CONFIGMAP_NAME: str = "custom-ca"
 
@@ -284,21 +285,16 @@ def wait_on_ingress_pods_reschedule(
             ]
         }
 
-        exceptions = []
-        for result in as_completed(futures):
-            _exception = result.exception()
-            if _exception:
-                import ipdb
+        for future in as_completed(futures):
+            ingress_pod = futures[future]
+            try:
+                future.result()  # Indicates if the pod reached Ready state
+                logger.debug(f"Pod {ingress_pod.name} is in {Pod.Condition.READY} state.")
+            except Exception as ex:
+                logger.error(f"Pod {ingress_pod.name} failed to reach {Pod.Condition.READY} state: {ex}")
+                return {WAIT_ON_INGRESS_PODS_RESCHEDULE: {"res": False, "err": str(ex)}}
 
-                ipdb.set_trace()
-                ingress_pod_name = None
-                logger.error(f"Failed to update Ingress pod {ingress_pod_name}")
-                exceptions.append(str(_exception))
-
-        if exceptions:
-            return {WAIT_ON_INGRESS_PODS_RESCHEDULE: {"res": False, "err": "\n".join(exceptions)}}
-
-        return {WAIT_ON_INGRESS_PODS_RESCHEDULE: {"res": True, "err": ""}}
+    return {WAIT_ON_INGRESS_PODS_RESCHEDULE: {"res": True, "err": ""}}
 
 
 def execute_ingress_configuration(
