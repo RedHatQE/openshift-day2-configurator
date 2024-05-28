@@ -800,12 +800,12 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.46"
+version = "5.0.40"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_utilities-5.0.46.tar.gz", hash = "sha256:b3a1565ebf142f89d127283c4ad6693a9460d074adb472feb1bb6e537a824cef"},
+    {file = "openshift_python_utilities-5.0.40.tar.gz", hash = "sha256:b6d679014c10b843609b98b28894141f03cbb9e9fcab3d3188c8bdf9d0653f52"},
 ]
 
 [package.dependencies]
@@ -813,7 +813,6 @@ beautifulsoup4 = ">=4.12.3,<5.0.0"
 colorlog = ">=6.7.0,<7.0.0"
 openshift-python-wrapper = ">=10.0.4"
 openshift-python-wrapper-data-collector = ">=1.0.4"
-pyhelper-utils = ">=0.0.21,<0.0.22"
 python-simple-logger = ">=1.0.5"
 pyyaml = ">=6.0.1,<7.0.0"
 requests = ">=2.31.0,<3.0.0"
@@ -822,12 +821,12 @@ timeout-sampler = ">=0.0.17"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "10.0.52"
+version = "10.0.53"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_wrapper-10.0.52.tar.gz", hash = "sha256:6309a2680c2eca22cf9db9a1112c984f3817a673d4d4e0e50cf63d7bd6675462"},
+    {file = "openshift_python_wrapper-10.0.53.tar.gz", hash = "sha256:86cd1537f1f7f5cc18dd9b434a87f0b7cb684cabe922921b3b25a04b66f07208"},
 ]
 
 [package.dependencies]
@@ -1063,12 +1062,12 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhelper-utils"
-version = "0.0.21"
+version = "0.0.22"
 description = "Collective utility functions for python projects"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "pyhelper_utils-0.0.21.tar.gz", hash = "sha256:4a8a0dbcbb4145851c43d28953e6dc6b51644bd72b2411c343fbf6fe40ae9e0b"},
+    {file = "pyhelper_utils-0.0.22.tar.gz", hash = "sha256:9706d61ed25bb273277285c062b165be65824f76e543084ff0a3af6217166d28"},
 ]
 
 [package.dependencies]
@@ -1246,12 +1245,12 @@ six = "*"
 
 [[package]]
 name = "python-simple-logger"
-version = "1.0.27"
+version = "1.0.28"
 description = "A simple logger for python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "python_simple_logger-1.0.27.tar.gz", hash = "sha256:f28ab23dc5ad7ddc739a00ecadc8addd3295f018b9beab68e60e350040427adb"},
+    {file = "python_simple_logger-1.0.28.tar.gz", hash = "sha256:c72630dea43780b3714de111192189291d1f38b7a4f6e56d4880b493382cb2f0"},
 ]
 
 [package.dependencies]
@@ -1577,4 +1576,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "6138ccd158f566aba430e06350c6733b024fe4f7864f988cdeec2d1b5fd80735"
+content-hash = "7869126f3bba5ee4e4f3f5deb5983022ef3609f40b1861d041edcef55d3ea057"
