@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import base64
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Union
 from kubernetes.dynamic import DynamicClient
 
 from ocp_resources.resource import ResourceEditor
@@ -57,7 +57,7 @@ def create_new_ingress_certificate(
     cluster_domain: str,
     ca_pem_file_path: str,
     ca_key_file_path: str,
-) -> Dict[str, Dict[str, str | bool]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
     logger.debug(CREATE_NEW_INGRESS_CERTIFICATE)
 
     missing_ca_files = [
@@ -180,7 +180,7 @@ def create_ingress_certificate_configmap(
 def update_cluster_proxy_trusted_ca(
     client: DynamicClient,
     logger: logging.Logger,
-) -> Dict[str, Dict[str, str | bool]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
     logger.debug(UPDATE_CLUSTER_PROXY_TRUSTED_CA)
 
     cluster_proxy = Proxy(client=client, name="cluster")
@@ -243,7 +243,7 @@ def update_ingress_controller_certificate(
     client: DynamicClient,
     logger: logging.Logger,
     cluster_domain: str,
-) -> Dict[str, Dict[str, str | bool]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
     logger.debug(UPDATE_INGRESS_CONTROLLER_CERTIFICATE)
 
     ingress_controller = IngressController(
@@ -274,7 +274,7 @@ def update_ingress_controller_certificate(
 def wait_on_ingress_pods_reschedule(
     client: DynamicClient,
     logger: logging.Logger,
-) -> Dict[str, Dict[str, str | bool]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
     logger.debug(WAIT_ON_INGRESS_PODS_RESCHEDULE)
 
     with ThreadPoolExecutor() as executor:
@@ -302,7 +302,7 @@ def execute_ingress_configuration(
     logger: logging.Logger,
     client: DynamicClient,
     progress: Progress | None = None,
-) -> Dict[str, Dict[str, str | bool]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
     logger.debug("Updating Ingress certificate")
 
     status_dict = {}
