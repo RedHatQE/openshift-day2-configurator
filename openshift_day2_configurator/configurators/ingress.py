@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import base64
 import logging
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Optional
 from kubernetes.dynamic import DynamicClient
 
 from ocp_resources.resource import ResourceEditor
@@ -301,14 +301,14 @@ def execute_ingress_configuration(
     config: Dict[str, Any],
     logger: logging.Logger,
     client: DynamicClient,
-    progress: Progress | None = None,
+    progress: Optional[Progress] = None,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
     logger.debug("Updating Ingress certificate")
 
     status_dict = {}
-    task_id: TaskID | None = None
+    task_id: Optional[TaskID] = None
 
-    cluster_domain: str | None = config.get("cluster_domain")
+    cluster_domain: Optional[str] = config.get("cluster_domain")
 
     tasks_dict = {
         CREATE_NEW_INGRESS_CERTIFICATE: {
