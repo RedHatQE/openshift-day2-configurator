@@ -461,20 +461,6 @@ files = [
 ]
 
 [[package]]
-name = "deprecation"
-version = "2.1.0"
-description = "A library to handle automated deprecations"
-optional = false
-python-versions = "*"
-files = [
-    {file = "deprecation-2.1.0-py2.py3-none-any.whl", hash = "sha256:a10811591210e1fb0e768a8c25517cabeabcba6f0bf96564f8ff45189f90b14a"},
-    {file = "deprecation-2.1.0.tar.gz", hash = "sha256:72b3bde64e5d778694b0cf68178aed03d15e15477116add3fb773e581f9518ff"},
-]
-
-[package.dependencies]
-packaging = "*"
-
-[[package]]
 name = "exceptiongroup"
 version = "1.2.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -814,21 +800,19 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.51"
+version = "5.0.40"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_utilities-5.0.51.tar.gz", hash = "sha256:11b911e63c7e42ba50dd69c3db04c5c70453e0c6828a0b8b47adbda9f8bfd055"},
+    {file = "openshift_python_utilities-5.0.40.tar.gz", hash = "sha256:b6d679014c10b843609b98b28894141f03cbb9e9fcab3d3188c8bdf9d0653f52"},
 ]
 
 [package.dependencies]
 beautifulsoup4 = ">=4.12.3,<5.0.0"
 colorlog = ">=6.7.0,<7.0.0"
-deprecation = ">=2.1.0,<3.0.0"
 openshift-python-wrapper = ">=10.0.4"
 openshift-python-wrapper-data-collector = ">=1.0.4"
-pyhelper-utils = ">=0.0.22,<0.0.23"
 python-simple-logger = ">=1.0.5"
 pyyaml = ">=6.0.1,<7.0.0"
 requests = ">=2.31.0,<3.0.0"
@@ -837,12 +821,12 @@ timeout-sampler = ">=0.0.17"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "10.0.58"
+version = "10.0.59"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_wrapper-10.0.58.tar.gz", hash = "sha256:5eb480816832779e6d9f23d9f08e43051844493cb87d916f6e9c36895391253b"},
+    {file = "openshift_python_wrapper-10.0.59.tar.gz", hash = "sha256:931d2154ec9fdac6c7675771e5ddfacb68687a16a516cfb31cd64654d4f75a7e"},
 ]
 
 [package.dependencies]
@@ -1078,12 +1062,12 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhelper-utils"
-version = "0.0.22"
+version = "0.0.24"
 description = "Collective utility functions for python projects"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "pyhelper_utils-0.0.22.tar.gz", hash = "sha256:9706d61ed25bb273277285c062b165be65824f76e543084ff0a3af6217166d28"},
+    {file = "pyhelper_utils-0.0.24.tar.gz", hash = "sha256:0a802a98c2c122a757cbe16c20c8f9e746344b7de30be679b62111cbc78aa270"},
 ]
 
 [package.dependencies]
@@ -1592,4 +1576,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "7869126f3bba5ee4e4f3f5deb5983022ef3609f40b1861d041edcef55d3ea057"
+content-hash = "3a70af88fc8fdec65212fda867bd6f1fa4e1c81e0a7f45fc295a97579f803d69"
