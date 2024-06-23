@@ -1,0 +1,9 @@
+CREATE_NEW_INGRESS_CERTIFICATE: str = "Create new Ingress certificate"
+CREATE_INGRESS_CERTIFICATE_CONFIGMAP: str = "Create ConfigMap with the new Ingress certificate"
+UPDATE_CLUSTER_PROXY_TRUSTED_CA: str = "Update cluster Proxy with the new Ingress certificate"
+CREATE_WILDCARD_CERTIFICATE_TLS_SECRET: str = "Create wildcard certificate tls secret"
+UPDATE_INGRESS_CONTROLLER_CERTIFICATE: str = "Update the IngressController certificate"
+WAIT_ON_INGRESS_PODS_RESCHEDULE: str = "Wait on Ingress pods to reschedule"
+OPENSHIFT_INGRESS_NAMESPACE: str = "openshift-ingress"
+INGRESS_CERTIFICATE_CONFIGMAP_NAME: str = "custom-ca"
+TIMEOUT_30MIN: int = 30 * 60
