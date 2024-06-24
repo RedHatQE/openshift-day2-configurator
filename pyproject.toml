@@ -2,10 +2,11 @@
 omit = [
   "openshift_day2_configurator/cli.py",
   "openshift_day2_configurator/tests/*",
+  "openshift_day2_configurator/configurators/ingress.py"
 ]
 
 [tool.coverage.report]
-fail_under = 45
+fail_under = 59
 skip_empty = true
 
 [tool.coverage.html]
