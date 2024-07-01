@@ -1,7 +1,7 @@
 import pytest
 from simple_logger.logger import get_logger
 
-from openshift_day2_configurator.utils.general import verify_and_execute_configurator
+from openshift_day2_configurator.utils.general import verify_and_execute_configurator_task
 
 LOGGER = get_logger(name="test-configurator")
 
@@ -23,7 +23,7 @@ def function_raises():
 
 
 def test_missing_keys_from_config(function_returns):
-    output = verify_and_execute_configurator(
+    output = verify_and_execute_configurator_task(
         func=function_returns,
         config={"key2": "value2"},
         logger_obj=LOGGER,
@@ -34,6 +34,6 @@ def test_missing_keys_from_config(function_returns):
 
 
 def test_function_raises_exception(function_raises):
-    output = verify_and_execute_configurator(func=function_raises)
+    output = verify_and_execute_configurator_task(func=function_raises)
     assert output["foo"]["res"] is False
     assert not output["foo"]["err"]
