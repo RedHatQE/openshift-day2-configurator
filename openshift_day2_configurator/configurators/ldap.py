@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import logging
 import shlex
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List
 
 from kubernetes.dynamic import DynamicClient
 from ocp_resources.cluster_role import ClusterRole
@@ -440,8 +440,8 @@ def execute_ldap_configuration(
     config: Dict[str, Any],
     logger: logging.Logger,
     client: DynamicClient,
-    progress: Optional[Progress] = None,
-) -> Dict[str, Dict[str, Union[str, bool]]]:
+    progress: Progress | None = None,
+) -> Dict[str, Dict[str, str | bool]]:
     logger.debug("Configuring LDAP")
 
     return execute_configurator(
@@ -485,5 +485,5 @@ def execute_ldap_configuration(
             "progress": progress,
             "logger": logger,
         },
-        description="  Configuring LDAP",
+        description="Configuring LDAP",
     )

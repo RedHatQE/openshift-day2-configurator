@@ -26,16 +26,17 @@ from openshift_day2_configurator.utils.general import (
 from rich.progress import Progress
 from openshift_day2_configurator.utils.resources import create_ocp_resource
 from openshift_day2_configurator.constants.ingress import (
-    CREATE_NEW_INGRESS_CERTIFICATE,
-    CREATE_INGRESS_CERTIFICATE_CONFIGMAP,
-    UPDATE_CLUSTER_PROXY_TRUSTED_CA,
-    CREATE_WILDCARD_CERTIFICATE_TLS_SECRET,
-    UPDATE_INGRESS_CONTROLLER_CERTIFICATE,
-    WAIT_ON_INGRESS_PODS_RESCHEDULE,
     OPENSHIFT_INGRESS_NAMESPACE,
     INGRESS_CERTIFICATE_CONFIGMAP_NAME,
     TIMEOUT_30MIN,
 )
+
+CREATE_NEW_INGRESS_CERTIFICATE: str = "Create new Ingress certificate"
+CREATE_INGRESS_CERTIFICATE_CONFIGMAP: str = "Create ConfigMap with the new Ingress certificate"
+UPDATE_CLUSTER_PROXY_TRUSTED_CA: str = "Update cluster Proxy with the new Ingress certificate"
+CREATE_WILDCARD_CERTIFICATE_TLS_SECRET: str = "Create wildcard certificate tls secret"
+UPDATE_INGRESS_CONTROLLER_CERTIFICATE: str = "Update the IngressController certificate"
+WAIT_ON_INGRESS_PODS_RESCHEDULE: str = "Wait on Ingress pods to reschedule"
 
 version = sys.version_info
 if version[0] == 3 and version[1] < 9:
@@ -405,5 +406,5 @@ def execute_ingress_configuration(
                 },
             },
         },
-        description="  Updating Ingress certificate",
+        description="Updating Ingress certificate",
     )

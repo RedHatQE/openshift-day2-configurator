@@ -67,7 +67,7 @@ def base_table() -> Table:
 
 
 def certificate_b64encode(certificate: str) -> str:
-    utf8_str: str = "utf-8"
+    utf8_str = "utf-8"
     return base64.b64encode(certificate.encode(utf8_str)).decode(utf8_str)
 
 
@@ -80,7 +80,7 @@ def execute_configurator(
     task_id: Optional[TaskID] = None
 
     if progress := verify_and_execute_kwargs["progress"]:
-        task_id = progress.add_task(description=description, total=len(tasks_dict))
+        task_id = progress.add_task(description=f"  {description}", total=len(tasks_dict))
 
     for _task, _func_config in tasks_dict.items():
         _kwargs: Dict[str, Any] = {**verify_and_execute_kwargs, **_func_config["func_kwargs"]}
