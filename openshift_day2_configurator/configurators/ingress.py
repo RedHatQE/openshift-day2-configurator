@@ -352,7 +352,8 @@ def execute_ingress_configuration(
     client: DynamicClient,
     progress: Optional[Progress] = None,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    logger.debug("Updating Ingress certificate")
+    ingress_configurator_description: str = "Updating Ingress certificate"
+    logger.debug(ingress_configurator_description)
 
     cluster_domain: Optional[str] = config.get("cluster_domain")
 
@@ -406,5 +407,5 @@ def execute_ingress_configuration(
                 },
             },
         },
-        description="Updating Ingress certificate",
+        description=ingress_configurator_description,
     )

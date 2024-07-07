@@ -57,41 +57,43 @@ def update_cluster_oath(
     bind_dn_name: str, url: str, logger: logging.Logger, client: DynamicClient
 ) -> Dict[str, Dict[str, str | bool]]:
     logger.debug(UPDATE_OAUTH_TASK_NAME)
-    cluster_oath = OAuth(client=client, name="cluster")
+    cluster_oauth = OAuth(client=client, name="cluster")
 
-    if not cluster_oath.exists:
-        logger.debug(f"Cluster OAuth {cluster_oath.name} does not exist")
+    if not cluster_oauth.exists:
+        logger.debug(f"Cluster OAuth {cluster_oauth.name} does not exist")
         return {
             UPDATE_OAUTH_TASK_NAME: {
                 "res": False,
-                "err": f"Cluster OAuth {cluster_oath.name} does not exist",
+                "err": f"Cluster OAuth {cluster_oauth.name} does not exist",
             }
         }
 
-    oath_dict = {
-        "identityProviders": [
-            {
-                "name": "ldapidp",
-                "mappingMethod": "claim",
-                "type": "LDAP",
-                "ldap": {
-                    "attributes": {
-                        "id": ["dn"],
-                        "email": ["mail"],
-                        "name": ["cn"],
-                        "preferredUsername": ["sAMAccountName"],
-                    },
-                    "bindDN": bind_dn_name,
-                    "bindPassword": {"name": "ldap-secret"},
-                    "insecure": True,
-                    "url": url,
-                },
-            }
-        ]
-    }
-
     try:
-        ResourceEditor({cluster_oath: {"spec": oath_dict}}).update()
+        ResourceEditor({
+            cluster_oauth: {
+                "spec": {
+                    "identityProviders": [
+                        {
+                            "name": "ldapidp",
+                            "mappingMethod": "claim",
+                            "type": "LDAP",
+                            "ldap": {
+                                "attributes": {
+                                    "id": ["dn"],
+                                    "email": ["mail"],
+                                    "name": ["cn"],
+                                    "preferredUsername": ["sAMAccountName"],
+                                },
+                                "bindDN": bind_dn_name,
+                                "bindPassword": {"name": "ldap-secret"},
+                                "insecure": True,
+                                "url": url,
+                            },
+                        }
+                    ]
+                }
+            }
+        }).update()
     except Exception as ex:
         logger.debug(f"Failed to update cluster oauth with error {ex}")
         return {UPDATE_OAUTH_TASK_NAME: {"res": False, "err": str(ex)}}
@@ -442,7 +444,8 @@ def execute_ldap_configuration(
     client: DynamicClient,
     progress: Progress | None = None,
 ) -> Dict[str, Dict[str, str | bool]]:
-    logger.debug("Configuring LDAP")
+    ldap_configurator_description: str = "Configuring LDAP"
+    logger.debug(ldap_configurator_description)
 
     return execute_configurator(
         tasks_dict={
@@ -485,5 +488,5 @@ def execute_ldap_configuration(
             "progress": progress,
             "logger": logger,
         },
-        description="Configuring LDAP",
+        description=ldap_configurator_description,
     )
