@@ -1,3 +1,0 @@
-OPENSHIFT_INGRESS_NAMESPACE: str = "openshift-ingress"
-INGRESS_CERTIFICATE_CONFIGMAP_NAME: str = "custom-ca"
-TIMEOUT_30MIN: int = 30 * 60
