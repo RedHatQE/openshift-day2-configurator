@@ -17,10 +17,10 @@ from ocp_resources.secret import Secret
 from ocp_resources.service_account import ServiceAccount
 from ocp_resources.sealed_secret import SealedSecret
 from pyhelper_utils.shell import run_command
-from rich.progress import Progress, TaskID
+from rich.progress import Progress
 
 from openshift_day2_configurator.utils.general import (
-    verify_and_execute_configurator,
+    execute_configurator,
 )
 from openshift_day2_configurator.utils.resources import create_ocp_resource
 
@@ -57,41 +57,43 @@ def update_cluster_oath(
     bind_dn_name: str, url: str, logger: logging.Logger, client: DynamicClient
 ) -> Dict[str, Dict[str, str | bool]]:
     logger.debug(UPDATE_OAUTH_TASK_NAME)
-    cluster_oath = OAuth(client=client, name="cluster")
+    cluster_oauth = OAuth(client=client, name="cluster")
 
-    if not cluster_oath.exists:
-        logger.debug(f"Cluster OAuth {cluster_oath.name} does not exist")
+    if not cluster_oauth.exists:
+        logger.debug(f"Cluster OAuth {cluster_oauth.name} does not exist")
         return {
             UPDATE_OAUTH_TASK_NAME: {
                 "res": False,
-                "err": f"Cluster OAuth {cluster_oath.name} does not exist",
+                "err": f"Cluster OAuth {cluster_oauth.name} does not exist",
             }
         }
 
-    oath_dict = {
-        "identityProviders": [
-            {
-                "name": "ldapidp",
-                "mappingMethod": "claim",
-                "type": "LDAP",
-                "ldap": {
-                    "attributes": {
-                        "id": ["dn"],
-                        "email": ["mail"],
-                        "name": ["cn"],
-                        "preferredUsername": ["sAMAccountName"],
-                    },
-                    "bindDN": bind_dn_name,
-                    "bindPassword": {"name": "ldap-secret"},
-                    "insecure": True,
-                    "url": url,
-                },
-            }
-        ]
-    }
-
     try:
-        ResourceEditor({cluster_oath: {"spec": oath_dict}}).update()
+        ResourceEditor({
+            cluster_oauth: {
+                "spec": {
+                    "identityProviders": [
+                        {
+                            "name": "ldapidp",
+                            "mappingMethod": "claim",
+                            "type": "LDAP",
+                            "ldap": {
+                                "attributes": {
+                                    "id": ["dn"],
+                                    "email": ["mail"],
+                                    "name": ["cn"],
+                                    "preferredUsername": ["sAMAccountName"],
+                                },
+                                "bindDN": bind_dn_name,
+                                "bindPassword": {"name": "ldap-secret"},
+                                "insecure": True,
+                                "url": url,
+                            },
+                        }
+                    ]
+                }
+            }
+        }).update()
     except Exception as ex:
         logger.debug(f"Failed to update cluster oauth with error {ex}")
         return {UPDATE_OAUTH_TASK_NAME: {"res": False, "err": str(ex)}}
@@ -442,64 +444,49 @@ def execute_ldap_configuration(
     client: DynamicClient,
     progress: Progress | None = None,
 ) -> Dict[str, Dict[str, str | bool]]:
-    logger.debug("Configuring LDAP")
+    ldap_configurator_description: str = "Configuring LDAP"
+    logger.debug(ldap_configurator_description)
 
-    status_dict = {}
-    task_id: TaskID | None = None
-
-    tasks_dict = {
-        CREATE_LDAP_SECRET_TASK_NAME: {
-            "func": create_ldap_secret,
-            "func_kwargs": {
-                "bind_password": config.get("bind_password"),
-                "client": client,
+    return execute_configurator(
+        tasks_dict={
+            CREATE_LDAP_SECRET_TASK_NAME: {
+                "func": create_ldap_secret,
+                "func_kwargs": {
+                    "bind_password": config.get("bind_password"),
+                    "client": client,
+                },
+            },
+            UPDATE_OAUTH_TASK_NAME: {
+                "func": update_cluster_oath,
+                "func_kwargs": {
+                    "bind_dn_name": config.get("bind_dn_name"),
+                    "url": config.get("url"),
+                    "client": client,
+                },
+            },
+            DISABLE_SELF_PROVISIONERS_TASK_NAME: {
+                "func": disable_self_provisioners,
+                "func_kwargs": {"client": client},
+            },
+            CREATE_LDAP_GROUPS_SYNC: {
+                "func": create_ldap_groups_sync,
+                "func_kwargs": {
+                    "group_syncer_name": config.get("group_syncer_name"),
+                    "group_syncer_namespace": config.get("group_syncer_namespace"),
+                    "group_syncer_whitelist": config.get("group_syncer_whitelist", ""),
+                    "group_syncer_schedule": config.get("group_syncer_schedule"),
+                    "concurrency_policy": config.get("group_syncer_concurrency_policy"),
+                    "sealed_sync_secret_name": config.get("sealed_sync_secret_name"),
+                    "sealed_sync_secret_encrypted_data": config.get("sealed_sync_secret_encrypted_data"),
+                    "client": client,
+                },
             },
         },
-        UPDATE_OAUTH_TASK_NAME: {
-            "func": update_cluster_oath,
-            "func_kwargs": {
-                "bind_dn_name": config.get("bind_dn_name"),
-                "url": config.get("url"),
-                "client": client,
-            },
+        verify_and_execute_kwargs={
+            "config": config,
+            "logger_obj": logger,
+            "progress": progress,
+            "logger": logger,
         },
-        DISABLE_SELF_PROVISIONERS_TASK_NAME: {
-            "func": disable_self_provisioners,
-            "func_kwargs": {"client": client},
-        },
-        CREATE_LDAP_GROUPS_SYNC: {
-            "func": create_ldap_groups_sync,
-            "func_kwargs": {
-                "group_syncer_name": config.get("group_syncer_name"),
-                "group_syncer_namespace": config.get("group_syncer_namespace"),
-                "group_syncer_whitelist": config.get("group_syncer_whitelist", ""),
-                "group_syncer_schedule": config.get("group_syncer_schedule"),
-                "concurrency_policy": config.get("group_syncer_concurrency_policy"),
-                "sealed_sync_secret_name": config.get("sealed_sync_secret_name"),
-                "sealed_sync_secret_encrypted_data": config.get("sealed_sync_secret_encrypted_data"),
-                "client": client,
-            },
-        },
-    }
-
-    verify_and_execute_kwargs = {
-        "config": config,
-        "logger_obj": logger,
-        "progress": progress,
-        "logger": logger,
-    }
-
-    if progress:
-        task_id = progress.add_task(description="  Configuring LDAP", total=len(tasks_dict))
-
-    for _task, _func_config in tasks_dict.items():
-        _kwargs: Dict[str, Any] = {**verify_and_execute_kwargs, **_func_config["func_kwargs"]}  # type: ignore[dict-item]
-        status_dict.update(verify_and_execute_configurator(func=_func_config["func"], task_name=_task, **_kwargs))
-
-        if progress and task_id is not None:
-            progress.update(task_id, advance=1)
-
-    if progress and task_id is not None:
-        progress.update(task_id, advance=1)
-
-    return status_dict
+        description=ldap_configurator_description,
+    )

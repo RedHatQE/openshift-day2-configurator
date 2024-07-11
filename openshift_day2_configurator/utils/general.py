@@ -1,21 +1,22 @@
 from __future__ import annotations
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Union, Optional
 
+import base64
 from rich import box
-from rich.progress import Progress
+from rich.progress import Progress, TaskID
 from rich.table import Table
 
 
-def verify_and_execute_configurator(
+def verify_and_execute_configurator_task(
     func: Any,
-    config: Dict[str, Any] | None = None,
-    logger_obj: logging.Logger | None = None,
-    progress: Progress | None = None,
-    task_name: str | None = None,
+    config: Optional[Dict[str, Any]] = None,
+    logger_obj: Optional[logging.Logger] = None,
+    progress: Optional[Progress] = None,
+    task_name: Optional[str] = None,
     *args: Any,
     **kwargs: Any,
-) -> Dict[str, Dict[str, str | bool]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
     task_name = f"    {task_name}" if task_name else func.__name__
     task = progress.add_task(task_name, total=1) if progress else None
 
@@ -63,3 +64,32 @@ def base_table() -> Table:
     table.add_column("Failure Reason", style="red")
 
     return table
+
+
+def certificate_b64encode(certificate: str) -> str:
+    utf8_str = "utf-8"
+    return base64.b64encode(certificate.encode(utf8_str)).decode(utf8_str)
+
+
+def execute_configurator(
+    verify_and_execute_kwargs: Dict[str, Any],
+    tasks_dict: Dict[str, Dict[str, Any]],
+    description: str,
+) -> Dict[str, Dict[str, Union[str, bool]]]:
+    status_dict = {}
+    task_id: Optional[TaskID] = None
+
+    if progress := verify_and_execute_kwargs["progress"]:
+        task_id = progress.add_task(description=f"  {description}", total=len(tasks_dict))
+
+    for _task, _func_config in tasks_dict.items():
+        _kwargs: Dict[str, Any] = {**verify_and_execute_kwargs, **_func_config["func_kwargs"]}
+        status_dict.update(verify_and_execute_configurator_task(func=_func_config["func"], task_name=_task, **_kwargs))
+
+        if progress and task_id is not None:
+            progress.update(task_id, advance=1)
+
+    if progress and task_id is not None:
+        progress.update(task_id, advance=1)
+
+    return status_dict
