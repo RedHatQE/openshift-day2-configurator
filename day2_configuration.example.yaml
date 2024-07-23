@@ -21,3 +21,6 @@ configurators:
         cluster_domain: <ocp.customer.domain.com>
         ca_pem_file_path: </path/to/ca.pem>
         ca_key_file_path: </path/to/ca.key>
+
+    nodes:
+        cluster_domain: <ocp.customer.domain.com>

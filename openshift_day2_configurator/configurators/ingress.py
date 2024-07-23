@@ -21,7 +21,7 @@ from ocp_resources.proxy import Proxy
 
 from openshift_day2_configurator.utils.general import (
     execute_configurator,
-    certificate_b64encode,
+    str_b64encode,
 )
 from rich.progress import Progress
 from openshift_day2_configurator.utils.resources import create_ocp_resource
@@ -277,8 +277,8 @@ def create_wildcard_certificate_tls_secret(
                 name=f"wildcard.{cluster_domain}",
                 namespace=OPENSHIFT_INGRESS_NAMESPACE,
                 data_dict={
-                    "tls.crt": certificate_b64encode(certificate=ingress_certificate),
-                    "tls.key": certificate_b64encode(certificate=ingress_certificate_key),
+                    "tls.crt": str_b64encode(str_to_encode=ingress_certificate),
+                    "tls.key": str_b64encode(str_to_encode=ingress_certificate_key),
                 },
                 type="kubernetes.io/tls",
             ),

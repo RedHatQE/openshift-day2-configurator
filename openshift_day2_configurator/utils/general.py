@@ -66,9 +66,9 @@ def base_table() -> Table:
     return table
 
 
-def certificate_b64encode(certificate: str) -> str:
+def str_b64encode(str_to_encode: str) -> str:
     utf8_str = "utf-8"
-    return base64.b64encode(certificate.encode(utf8_str)).decode(utf8_str)
+    return base64.b64encode(str_to_encode.encode(utf8_str)).decode(utf8_str)
 
 
 def execute_configurator(
