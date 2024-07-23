@@ -11,6 +11,7 @@ The OpenShift Day-2 Configuration Tool is a tool to configure Day-2 environment 
 ### Setup
 - OpenShift cluster must be provisioned and running.
 - Cluster admin privileges are required.
+- [bitnami-labs SealedSecrets](https://github.com/bitnami-labs/sealed-secrets) custom resource must be installed.
 
 ### Configuration
 - Edit [day2 config](day2_configuration.example.yaml) file; replace all placeholders with values.
