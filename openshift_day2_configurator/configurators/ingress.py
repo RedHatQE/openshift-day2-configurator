@@ -191,7 +191,7 @@ def create_new_ingress_certificate(
         generate_ingress_certificate_file(cluster_domain=cluster_domain, csr=csr, ca_cert=ca_cert, ca_key=ca_key)
 
     except Exception as ex:
-        logger.error("Failed to create Ingress certificate file: {ex}")
+        logger.error(f"Failed to create Ingress certificate file: {ex}")
         return {CREATE_NEW_INGRESS_CERTIFICATE: {"res": False, "err": str(ex)}}
 
     return {CREATE_NEW_INGRESS_CERTIFICATE: {"res": True, "err": ""}}

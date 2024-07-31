@@ -1,5 +1,8 @@
+import shlex
 import logging
-from typing import Any, Dict, Union, Optional
+from timeout_sampler import TimeoutSampler
+from pyhelper_utils.shell import run_command
+from typing import Any, Dict, Union, Optional, List, Tuple, Callable
 
 from openshift_day2_configurator.utils.general import (
     execute_configurator,
@@ -9,8 +12,12 @@ from rich.progress import Progress
 from openshift_day2_configurator.utils.resources import create_ocp_resource
 from kubernetes.dynamic import DynamicClient
 from ocp_resources.machine_config import MachineConfig
+from ocp_resources.node import Node
 
 MACHINE_CONFIGURATION_ROLE_LABEL: str = "machineconfiguration.openshift.io/role"
+MASTER_NODE_TYPE: str = "master"
+WORKER_NODE_TYPE: str = "worker"
+TIMEOUT_30MIN: int = 30 * 60
 
 
 def configure_chrony_ntp_on_nodes_message(nodes_type: str) -> str:
@@ -26,7 +33,7 @@ def adding_realtime_kernel_to_nodes_message(nodes_type: str) -> str:
 
 
 def configure_journald_setting_on_nodes_message(nodes_type: str) -> str:
-    return f" Configure journald settings on {nodes_type} nodes"
+    return f"Configure journald settings on {nodes_type} nodes"
 
 
 def configure_image_registry_setting_on_nodes_message(nodes_type: str) -> str:
@@ -35,6 +42,45 @@ def configure_image_registry_setting_on_nodes_message(nodes_type: str) -> str:
 
 def adding_extensions_to_rhcos_on_nodes_message(nodes_type: str) -> str:
     return f"Adding extensions to RHCOS on {nodes_type} nodes"
+
+
+def get_node_role(node: Node) -> str:
+    labels = node.instance.to_dict().get("metadata", {}).get("labels", {})
+    node_role_kubernetes_io = "node-role.kubernetes.io"
+
+    if f"{node_role_kubernetes_io}/master" in labels or f"{node_role_kubernetes_io}/control-plane" in labels:
+        return MASTER_NODE_TYPE
+    return WORKER_NODE_TYPE
+
+
+def get_cluster_nodes(client: DynamicClient, node_role: str) -> List[Node]:
+    return [node for node in Node.get(dyn_client=client) if get_node_role(node=node) == node_role]
+
+
+def get_test_node_name(client: DynamicClient, nodes_type: str) -> str:
+    return get_cluster_nodes(client=client, node_role=nodes_type)[0].name
+
+
+def oc_debug_node_with_command(node_name: str, command: str) -> Tuple[bool, str, str]:
+    cmd: List[str] = shlex.split(f"oc debug node/{node_name} -- {command}")
+    return run_command(command=cmd, check=False, verify_stderr=False)
+
+
+def wait_for_node_condition(
+    timeout: int,
+    node_name: str,
+    node_command: str,
+    condition_met: Callable[[str], bool],
+) -> None:
+    for node_command_res, node_command_out, node_command_err in TimeoutSampler(
+        wait_timeout=timeout,
+        sleep=10,
+        func=oc_debug_node_with_command,
+        node_name=node_name,
+        command=node_command,
+    ):
+        if condition_met(node_command_out):
+            break
 
 
 def configure_chrony_ntp_on_nodes(
@@ -89,11 +135,15 @@ def adding_kernel_arguments_to_nodes(
     client: DynamicClient,
     logger: logging.Logger,
     nodes_type: str,
-) -> Dict[str, Dict[str, str]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
+    def is_new_kernel_argument_added(kernel_args: str) -> bool:
+        return new_kernel_argument in kernel_args
+
     logger.debug(adding_kernel_arguments_to_nodes_message(nodes_type=nodes_type))
 
-    # TODO: assert kernel argument is added to random node
-    return {
+    new_kernel_argument = "enforcing=0"
+
+    kernel_argument_task_dict = {
         adding_kernel_arguments_to_nodes_message(nodes_type=nodes_type): create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
@@ -102,10 +152,7 @@ def adding_kernel_arguments_to_nodes(
                 config={
                     "ignition": {
                         "version": "3.1.0",
-                        "kernelArguments": [
-                            "enforcing=0"
-                            # TODO: check why oc debug <worker-node> && cat /host/proc/cmdline doesnt show this arg
-                        ],
+                        "kernelArguments": [new_kernel_argument],
                     }
                 },
             ),
@@ -113,18 +160,38 @@ def adding_kernel_arguments_to_nodes(
         )
     }
 
+    test_node_name = get_test_node_name(client=client, nodes_type=nodes_type)
+    try:
+        wait_for_node_condition(
+            timeout=TIMEOUT_30MIN,
+            node_name=test_node_name,
+            node_command="cat /host/proc/cmdline",
+            condition_met=is_new_kernel_argument_added,
+        )
+    except Exception as ex:
+        return {
+            adding_kernel_arguments_to_nodes_message(nodes_type=nodes_type): {
+                "res": False,
+                "err": f"Failed to add {new_kernel_argument} kernel argument to {test_node_name} node: {ex}",
+            }
+        }
+
+    return kernel_argument_task_dict
+
 
 def adding_realtime_kernel_to_nodes(
     client: DynamicClient,
     logger: logging.Logger,
     nodes_type: str,
-) -> Dict[str, Dict[str, str]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
+    def is_realtime_kernel_added(kernel_info: str) -> bool:
+        return "PREEMPT_RT" in kernel_info
+
     logger.debug(adding_realtime_kernel_to_nodes_message(nodes_type=nodes_type))
 
     realtime_str = "realtime"
 
-    # TODO: assert realtime kernel is added to random node
-    return {
+    realtime_kernel_task_dict = {
         adding_realtime_kernel_to_nodes_message(nodes_type=nodes_type): create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
@@ -136,12 +203,33 @@ def adding_realtime_kernel_to_nodes(
         )
     }
 
+    test_node_name = get_test_node_name(client=client, nodes_type=nodes_type)
+    try:
+        wait_for_node_condition(
+            timeout=TIMEOUT_30MIN,
+            node_name=test_node_name,
+            node_command="uname -a",
+            condition_met=is_realtime_kernel_added,
+        )
+    except Exception as ex:
+        return {
+            adding_realtime_kernel_to_nodes_message(nodes_type=nodes_type): {
+                "res": False,
+                "err": f"Failed to add {realtime_str} kernel to {test_node_name} node: {ex}",
+            }
+        }
+
+    return realtime_kernel_task_dict
+
 
 def configure_journald_setting_on_nodes(
     client: DynamicClient,
     logger: logging.Logger,
     nodes_type: str,
-) -> Dict[str, Dict[str, str]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
+    def is_journald_setting_configured(journal_conf_output: str) -> bool:
+        return journald_conf == journal_conf_output
+
     logger.debug(configure_journald_setting_on_nodes_message(nodes_type=nodes_type))
 
     journald_conf = """
@@ -153,8 +241,9 @@ def configure_journald_setting_on_nodes(
     MaxRetentionSec=30s
     """
 
-    # TODO: assert journald settings has changed on random node
-    return {
+    journald_conf_path = "/etc/systemd/journald.conf"
+
+    journald_task_dict = {
         configure_journald_setting_on_nodes_message(nodes_type=nodes_type): create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
@@ -174,7 +263,7 @@ def configure_journald_setting_on_nodes(
                                 },
                                 "filesystem": "root",
                                 "mode": 420,
-                                "path": "/etc/systemd/journald.conf",
+                                "path": journald_conf_path,
                             }
                         ]
                     },
@@ -183,22 +272,42 @@ def configure_journald_setting_on_nodes(
             logger=logger,
         )
     }
+    test_node_name = get_test_node_name(client=client, nodes_type=nodes_type)
+    try:
+        wait_for_node_condition(
+            timeout=TIMEOUT_30MIN,
+            node_name=test_node_name,
+            node_command=f"cat {journald_conf_path}",
+            condition_met=is_journald_setting_configured,
+        )
+    except Exception as ex:
+        return {
+            configure_journald_setting_on_nodes_message(nodes_type=nodes_type): {
+                "res": False,
+                "err": f"Failed to configure journald setting on {test_node_name} node: {ex}",
+            }
+        }
+
+    return journald_task_dict
 
 
 def configure_image_registry_setting_on_nodes(
     client: DynamicClient,
     logger: logging.Logger,
     nodes_type: str,
-) -> Dict[str, Dict[str, str]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
+    def is_image_registry_setting_configured(registries_conf_output: str) -> bool:
+        return registries_conf == registries_conf_output
+
     logger.debug(configure_image_registry_setting_on_nodes_message(nodes_type=nodes_type))
 
     registries_conf = """
     unqualified-search-registries = ['registry.access.redhat.com', 'docker.io', 'quay.io']
     """
     search_registries_machine_config_name = f"99-{nodes_type}-unqualified-search-registries"
+    search_registries_conf_path = f"/etc/containers/registries.conf.d/{search_registries_machine_config_name}.conf"
 
-    # TODO: assert image registries are recongnized on a random node
-    return {
+    image_registries_task_dict = {
         configure_image_registry_setting_on_nodes_message(nodes_type=nodes_type): create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
@@ -215,7 +324,7 @@ def configure_image_registry_setting_on_nodes(
                                     },
                                     "filesystem": "root",
                                     "mode": "0644",
-                                    "path": f"/etc/containers/registries.conf.d/{search_registries_machine_config_name}.conf",
+                                    "path": search_registries_conf_path,
                                 }
                             ]
                         },
@@ -225,30 +334,69 @@ def configure_image_registry_setting_on_nodes(
             logger=logger,
         )
     }
+    test_node_name = get_test_node_name(client=client, nodes_type=nodes_type)
+    try:
+        wait_for_node_condition(
+            timeout=TIMEOUT_30MIN,
+            node_name=test_node_name,
+            node_command=f"cat {search_registries_conf_path}",
+            condition_met=is_image_registry_setting_configured,
+        )
+    except Exception as ex:
+        return {
+            configure_image_registry_setting_on_nodes_message(nodes_type=nodes_type): {
+                "res": False,
+                "err": f"Failed to configure images registry setting on {test_node_name} node: {ex}",
+            }
+        }
+
+    return image_registries_task_dict
 
 
 def adding_extensions_to_rhcos_on_nodes(
     client: DynamicClient,
     logger: logging.Logger,
     nodes_type: str,
-) -> Dict[str, Dict[str, str]]:
+) -> Dict[str, Dict[str, Union[str, bool]]]:
+    def is_extensions_added_to_rhcos(is_usbguard_installed: str) -> bool:
+        return "is not installed" not in is_usbguard_installed
+
     logger.debug(adding_extensions_to_rhcos_on_nodes_message(nodes_type=nodes_type))
 
-    # TODO: assert extensions are added to RHCOS on random node
-    return {
+    rhcos_extension_name: str = "usbguard"
+
+    rhcos_extensions_task_dict = {
         adding_extensions_to_rhcos_on_nodes_message(nodes_type=nodes_type): create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
                 name=f"80-{nodes_type}-extensions",
                 label={MACHINE_CONFIGURATION_ROLE_LABEL: nodes_type},
-                config={"ignition": {"version": "3.1.0", "extensions": ["usbguard"]}},
+                config={"ignition": {"version": "3.1.0", "extensions": [rhcos_extension_name]}},
             ),
             logger=logger,
         )
     }
+    # TODO: check why RHCOS extensions are not added properly
+    test_node_name = get_test_node_name(client=client, nodes_type=nodes_type)
+    try:
+        wait_for_node_condition(
+            timeout=TIMEOUT_30MIN,
+            node_name=test_node_name,
+            node_command=f"rpm -q {rhcos_extension_name}",
+            condition_met=is_extensions_added_to_rhcos,
+        )
+    except Exception as ex:
+        return {
+            adding_extensions_to_rhcos_on_nodes_message(nodes_type=nodes_type): {
+                "res": False,
+                "err": f"Failed to add {rhcos_extension_name} extension to rhcos on {nodes_type} nodes: {ex}",
+            }
+        }
+
+    return rhcos_extensions_task_dict
 
 
-# TODO: add task for Loading custom firmware blobs in the machine config manifest
+# TODO: Add task for adding custom firmware blobs to nodes here
 
 
 def execute_nodes_configuration(
@@ -261,8 +409,6 @@ def execute_nodes_configuration(
     logger.debug(nodes_configurator_description)
 
     cluster_domain: Optional[str] = config.get("cluster_domain")
-    master_node_type: str = "master"
-    worker_node_type: str = "worker"
 
     return execute_configurator(
         verify_and_execute_kwargs={
@@ -272,86 +418,102 @@ def execute_nodes_configuration(
             "logger": logger,
         },
         tasks_dict={
-            configure_chrony_ntp_on_nodes_message(nodes_type=master_node_type): {
+            configure_chrony_ntp_on_nodes_message(nodes_type=MASTER_NODE_TYPE): {
                 "func": configure_chrony_ntp_on_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
                     "cluster_domain": cluster_domain,
-                    "nodes_type": master_node_type,
+                    "nodes_type": MASTER_NODE_TYPE,
                 },
             },
-            configure_chrony_ntp_on_nodes_message(nodes_type=worker_node_type): {
+            configure_chrony_ntp_on_nodes_message(nodes_type=WORKER_NODE_TYPE): {
                 "func": configure_chrony_ntp_on_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
                     "cluster_domain": cluster_domain,
-                    "nodes_type": worker_node_type,
+                    "nodes_type": WORKER_NODE_TYPE,
                 },
             },
-            adding_kernel_arguments_to_nodes_message(nodes_type=master_node_type): {
+            adding_kernel_arguments_to_nodes_message(nodes_type=MASTER_NODE_TYPE): {
                 "func": adding_kernel_arguments_to_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
-                    "nodes_type": master_node_type,
+                    "nodes_type": MASTER_NODE_TYPE,
                 },
             },
-            adding_kernel_arguments_to_nodes_message(nodes_type=worker_node_type): {
+            adding_kernel_arguments_to_nodes_message(nodes_type=WORKER_NODE_TYPE): {
                 "func": adding_kernel_arguments_to_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
-                    "nodes_type": worker_node_type,
+                    "nodes_type": WORKER_NODE_TYPE,
                 },
             },
-            adding_realtime_kernel_to_nodes_message(nodes_type=master_node_type): {
+            adding_realtime_kernel_to_nodes_message(nodes_type=MASTER_NODE_TYPE): {
                 "func": adding_realtime_kernel_to_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
-                    "nodes_type": master_node_type,
+                    "nodes_type": MASTER_NODE_TYPE,
                 },
             },
-            adding_realtime_kernel_to_nodes_message(nodes_type=worker_node_type): {
+            adding_realtime_kernel_to_nodes_message(nodes_type=WORKER_NODE_TYPE): {
                 "func": adding_realtime_kernel_to_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
-                    "nodes_type": worker_node_type,
+                    "nodes_type": WORKER_NODE_TYPE,
                 },
             },
-            configure_journald_setting_on_nodes_message(nodes_type=master_node_type): {
+            configure_journald_setting_on_nodes_message(nodes_type=MASTER_NODE_TYPE): {
                 "func": configure_journald_setting_on_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
-                    "nodes_type": master_node_type,
+                    "nodes_type": MASTER_NODE_TYPE,
                 },
             },
-            configure_journald_setting_on_nodes_message(nodes_type=worker_node_type): {
+            configure_journald_setting_on_nodes_message(nodes_type=WORKER_NODE_TYPE): {
                 "func": configure_journald_setting_on_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
-                    "nodes_type": worker_node_type,
+                    "nodes_type": WORKER_NODE_TYPE,
                 },
             },
-            configure_image_registry_setting_on_nodes_message(nodes_type=master_node_type): {
+            configure_image_registry_setting_on_nodes_message(nodes_type=MASTER_NODE_TYPE): {
                 "func": configure_image_registry_setting_on_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
-                    "nodes_type": master_node_type,
+                    "nodes_type": MASTER_NODE_TYPE,
                 },
             },
-            configure_image_registry_setting_on_nodes_message(nodes_type=worker_node_type): {
+            configure_image_registry_setting_on_nodes_message(nodes_type=WORKER_NODE_TYPE): {
                 "func": configure_image_registry_setting_on_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
-                    "nodes_type": worker_node_type,
+                    "nodes_type": WORKER_NODE_TYPE,
+                },
+            },
+            adding_extensions_to_rhcos_on_nodes_message(nodes_type=MASTER_NODE_TYPE): {
+                "func": adding_extensions_to_rhcos_on_nodes,
+                "func_kwargs": {
+                    "client": client,
+                    "logger": logger,
+                    "nodes_type": MASTER_NODE_TYPE,
+                },
+            },
+            adding_extensions_to_rhcos_on_nodes_message(nodes_type=WORKER_NODE_TYPE): {
+                "func": adding_extensions_to_rhcos_on_nodes,
+                "func_kwargs": {
+                    "client": client,
+                    "logger": logger,
+                    "nodes_type": WORKER_NODE_TYPE,
                 },
             },
         },

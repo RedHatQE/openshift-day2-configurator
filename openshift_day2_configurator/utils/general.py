@@ -27,7 +27,11 @@ def verify_and_execute_configurator_task(
         if (
             kwargs
             and config
-            and (missing_keys := [_key for _key in kwargs if _key not in ("logger", "client") and _key not in config])
+            and (
+                missing_keys := [
+                    _key for _key in kwargs if _key not in ("logger", "client", "nodes_type") and _key not in config
+                ]
+            )
         ):
             if progress and task is not None:
                 progress.update(task, advance=1, description=task_name)
