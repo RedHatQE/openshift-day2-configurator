@@ -3,7 +3,7 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography import x509
 from cryptography.x509 import CertificateSigningRequest
 from cryptography.x509.oid import NameOID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import os
@@ -115,8 +115,8 @@ def generate_ingress_certificate_file(
         .issuer_name(ca_cert.subject)
         .public_key(csr.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.utcnow())
-        .not_valid_after(datetime.utcnow() + timedelta(days=825))
+        .not_valid_before(datetime.now(timezone.utc))
+        .not_valid_after(datetime.now(timezone.utc) + timedelta(days=825))
     )
 
     certificate_extensions = [
@@ -155,7 +155,7 @@ def generate_ingress_certificate_file(
 @cache
 def get_ingress_certificate_from_file(cluster_domain: str) -> str:
     with open(f"*.{cluster_domain}.crt", "rb") as ingress_certificate_file:
-        ingress_certificate = ingress_certificate_file.read().decode("utf-8")
+        ingress_certificate = ingress_certificate_file.read().decode()
 
     return ingress_certificate
 
@@ -188,12 +188,10 @@ def create_new_ingress_certificate(
             ca_pem_file_path=ca_pem_file_path, ca_key_file_path=ca_key_file_path
         )
 
-        new_ingress_certificate_filename = generate_ingress_certificate_file(
-            cluster_domain=cluster_domain, csr=csr, ca_cert=ca_cert, ca_key=ca_key
-        )
+        generate_ingress_certificate_file(cluster_domain=cluster_domain, csr=csr, ca_cert=ca_cert, ca_key=ca_key)
 
     except Exception as ex:
-        logger.error(f"Failed to create {new_ingress_certificate_filename} Ingress certificate file: {ex}")
+        logger.error("Failed to create Ingress certificate file: {ex}")
         return {CREATE_NEW_INGRESS_CERTIFICATE: {"res": False, "err": str(ex)}}
 
     return {CREATE_NEW_INGRESS_CERTIFICATE: {"res": True, "err": ""}}
@@ -268,7 +266,7 @@ def create_wildcard_certificate_tls_secret(
     ingress_certificate = get_ingress_certificate_from_file(cluster_domain=cluster_domain)
 
     with open(f"{cluster_domain}.key", "rb") as ingress_certificate_key_file:
-        ingress_certificate_key = ingress_certificate_key_file.read().decode("utf-8")
+        ingress_certificate_key = ingress_certificate_key_file.read().decode()
 
     return {
         CREATE_WILDCARD_CERTIFICATE_TLS_SECRET: create_ocp_resource(
