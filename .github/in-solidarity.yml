@@ -13,3 +13,4 @@ ignore:
  - "**/*.yml"
  - "day2_configuration.example.yaml"
  - "openshift_day2_configurator/configurators/ldap.py"
+ - "openshift_day2_configurator/configurators/nodes.py"
