@@ -10,7 +10,6 @@ def create_ocp_resource(ocp_resource: Any, logger: logging.Logger) -> Dict[str, 
         if ocp_resource.exists:
             return {"res": False, "err": f"{resource_kind} {name} already exists"}
         else:
-            logger.debug(f"Create {resource_kind} {name}")
             ocp_resource.deploy()
             return {"res": True, "err": ""}
 
