@@ -63,4 +63,4 @@ repos:
     hooks:
       - id: mypy
         exclude: ^(openshift_day2_configurator/tests/)
-        additional_dependencies: [types-all]
+        additional_dependencies: ["types-PyYAML"]
