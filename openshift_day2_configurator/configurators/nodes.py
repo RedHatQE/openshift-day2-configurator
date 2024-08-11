@@ -404,15 +404,6 @@ def adding_extensions_to_rhcos_on_nodes(
     return rhcos_extensions_task_dict
 
 
-# def loading_custom_firmware_blobs_on_nodes(
-#     client: DynamicClient,
-#     logger: logging.Logger,
-#     nodes_type: str,
-# ) -> Dict[str, Dict[str, Union[str, bool]]]:
-#     pass
-#     # TODO: Add task for loading custom firmware blobs on nodes here
-
-
 def execute_nodes_configuration(
     config: Dict[str, Any],
     logger: logging.Logger,
