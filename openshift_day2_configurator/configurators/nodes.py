@@ -43,10 +43,6 @@ def adding_extensions_to_rhcos_on_nodes_message(nodes_type: str) -> str:
     return f"Adding extensions to RHCOS on {nodes_type} nodes"
 
 
-def loading_custom_firmware_blobs_on_nodes_message(nodes_type: str) -> str:
-    return f"Adding custom firmware blobs to {nodes_type} nodes"
-
-
 def get_machine_config_pool(client: DynamicClient, nodes_type: str) -> MachineConfigPool:
     return [mcp for mcp in MachineConfigPool.get(dyn_client=client) if mcp.name == nodes_type][0]
 
