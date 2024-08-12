@@ -301,21 +301,6 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
-name = "cloup"
-version = "3.0.5"
-description = "Adds features to Click: option groups, constraints, subcommand sections and help themes."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "cloup-3.0.5-py2.py3-none-any.whl", hash = "sha256:bf122036066584eb0db113561167c29969cc015972b7b7ee03158d9bc7de87f8"},
-    {file = "cloup-3.0.5.tar.gz", hash = "sha256:c92b261c7bb7e13004930f3fb4b3edad8de2d1f12994dcddbe05bc21990443c5"},
-]
-
-[package.dependencies]
-click = ">=8.0,<9.0"
-typing-extensions = {version = "*", markers = "python_version <= \"3.8\""}
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -829,12 +814,12 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.59"
+version = "5.0.60"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_utilities-5.0.59.tar.gz", hash = "sha256:bd54053c3baaf46a3b2691ab9252e767779efa5a5a4a1143d59c7ec18a2c7df7"},
+    {file = "openshift_python_utilities-5.0.60.tar.gz", hash = "sha256:a74b23eb1949ee6dea2f85c102ef958ada793b504be2a1d738a215e487debf44"},
 ]
 
 [package.dependencies]
@@ -852,26 +837,21 @@ timeout-sampler = ">=0.0.17"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "10.0.71"
+version = "10.0.65"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_wrapper-10.0.71.tar.gz", hash = "sha256:3de74a32f89285ca7e4956847b978197d9383db3d73c002c86ea2d5b3ba4adcf"},
+    {file = "openshift_python_wrapper-10.0.65.tar.gz", hash = "sha256:cbaa7d5785474d2d05325e4f2893d38b1d85815bbf476a22e18c635786ef5690"},
 ]
 
 [package.dependencies]
-click = ">=8.1.7,<9.0.0"
-cloup = ">=3.0.5,<4.0.0"
 colorlog = ">=6.7.0,<7.0.0"
 jinja2 = ">=3.1.2,<4.0.0"
 kubernetes = ">=30.0.0,<31.0.0"
 packaging = ">=23.1,<24.0"
-pyhelper-utils = ">=0.0.31,<0.0.32"
 python-benedict = ">=0.33.0,<0.34.0"
 python-simple-logger = ">=1.0.6"
-rich = ">=13.7.1,<14.0.0"
-ruff = ">=0.5.3,<0.6.0"
 timeout-sampler = ">=0.0.17"
 xmltodict = ">=0.13.0,<0.14.0"
 
@@ -1098,12 +1078,12 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhelper-utils"
-version = "0.0.31"
+version = "0.0.32"
 description = "Collective utility functions for python projects"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "pyhelper_utils-0.0.31.tar.gz", hash = "sha256:8767daaeb548e12f7f58beb8e8b460c209f950bd8a2dd590b384c6f20992f72a"},
+    {file = "pyhelper_utils-0.0.32.tar.gz", hash = "sha256:d0c8975082532d1d69653fb866583a74979f48256fd159ccd5cdbe2ab78ceb11"},
 ]
 
 [package.dependencies]
@@ -1281,12 +1261,12 @@ six = "*"
 
 [[package]]
 name = "python-simple-logger"
-version = "1.0.34"
+version = "1.0.35"
 description = "A simple logger for python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "python_simple_logger-1.0.34.tar.gz", hash = "sha256:66d00ee02b07e41e7b0c4349ffa63fdf0d01caf68f1f71d302e5e13968de62a4"},
+    {file = "python_simple_logger-1.0.35.tar.gz", hash = "sha256:98628a1ad0ff7320e19a68b2c35d3a3ee5af469ffaf7eb72336cb3f8c7e7f91c"},
 ]
 
 [package.dependencies]
@@ -1440,33 +1420,6 @@ files = [
 
 [package.dependencies]
 pyasn1 = ">=0.1.3"
-
-[[package]]
-name = "ruff"
-version = "0.5.5"
-description = "An extremely fast Python linter and code formatter, written in Rust."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "ruff-0.5.5-py3-none-linux_armv6l.whl", hash = "sha256:605d589ec35d1da9213a9d4d7e7a9c761d90bba78fc8790d1c5e65026c1b9eaf"},
-    {file = "ruff-0.5.5-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:00817603822a3e42b80f7c3298c8269e09f889ee94640cd1fc7f9329788d7bf8"},
-    {file = "ruff-0.5.5-py3-none-macosx_11_0_arm64.whl", hash = "sha256:187a60f555e9f865a2ff2c6984b9afeffa7158ba6e1eab56cb830404c942b0f3"},
-    {file = "ruff-0.5.5-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fe26fc46fa8c6e0ae3f47ddccfbb136253c831c3289bba044befe68f467bfb16"},
-    {file = "ruff-0.5.5-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:4ad25dd9c5faac95c8e9efb13e15803cd8bbf7f4600645a60ffe17c73f60779b"},
-    {file = "ruff-0.5.5-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f70737c157d7edf749bcb952d13854e8f745cec695a01bdc6e29c29c288fc36e"},
-    {file = "ruff-0.5.5-py3-none-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:cfd7de17cef6ab559e9f5ab859f0d3296393bc78f69030967ca4d87a541b97a0"},
-    {file = "ruff-0.5.5-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:a09b43e02f76ac0145f86a08e045e2ea452066f7ba064fd6b0cdccb486f7c3e7"},
-    {file = "ruff-0.5.5-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:d0b856cb19c60cd40198be5d8d4b556228e3dcd545b4f423d1ad812bfdca5884"},
-    {file = "ruff-0.5.5-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3687d002f911e8a5faf977e619a034d159a8373514a587249cc00f211c67a091"},
-    {file = "ruff-0.5.5-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:ac9dc814e510436e30d0ba535f435a7f3dc97f895f844f5b3f347ec8c228a523"},
-    {file = "ruff-0.5.5-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:af9bdf6c389b5add40d89b201425b531e0a5cceb3cfdcc69f04d3d531c6be74f"},
-    {file = "ruff-0.5.5-py3-none-musllinux_1_2_i686.whl", hash = "sha256:d40a8533ed545390ef8315b8e25c4bb85739b90bd0f3fe1280a29ae364cc55d8"},
-    {file = "ruff-0.5.5-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:cab904683bf9e2ecbbe9ff235bfe056f0eba754d0168ad5407832928d579e7ab"},
-    {file = "ruff-0.5.5-py3-none-win32.whl", hash = "sha256:696f18463b47a94575db635ebb4c178188645636f05e934fdf361b74edf1bb2d"},
-    {file = "ruff-0.5.5-py3-none-win_amd64.whl", hash = "sha256:50f36d77f52d4c9c2f1361ccbfbd09099a1b2ea5d2b2222c586ab08885cf3445"},
-    {file = "ruff-0.5.5-py3-none-win_arm64.whl", hash = "sha256:3191317d967af701f1b73a31ed5788795936e423b7acce82a2b63e26eb3e89d6"},
-    {file = "ruff-0.5.5.tar.gz", hash = "sha256:cc5516bdb4858d972fbc31d246bdb390eab8df1a26e2353be2dbc0c2d7f5421a"},
-]
 
 [[package]]
 name = "semver"
@@ -1639,4 +1592,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "36a8a2ea952de00191a9f42748ae1a26b27235a0633d3ba78e3b3db27c52abd5"
+content-hash = "c0569dfc811fd2a3ac920d6f05a0fdf74cf3d54c0a08fad7abfc7922142a9290"
