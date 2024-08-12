@@ -60,8 +60,7 @@ def generate_firmware_machine_config_file(
 ) -> str:
     firmware_machine_config_file: str = f"{firmware_package_name}.yaml"
 
-    # TODO: check res/err if this will raise automatically?
-    res, _, err = run_command(
+    run_command(
         command=shlex.split(f"butane -o {firmware_machine_config_file} --files-dir {firmware_files_dir}"),
         input=butane_content,
     )
@@ -491,7 +490,6 @@ def execute_nodes_configuration(
     nodes_configurator_description: str = "Configure nodes using MachineConfig"
     logger.debug(nodes_configurator_description)
 
-    nodes_type_str: str = "nodes_type"
     cluster_domain_str: str = "cluster_domain"
     firmware_files_dir_str: str = "firmware_files_dir"
     firmware_blob_file_str = "firmware_blob_file"
@@ -571,7 +569,7 @@ def execute_nodes_configuration(
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
-                    nodes_type_str: WORKER_NODE_TYPE,
+                    "nodes_type": WORKER_NODE_TYPE,
                     firmware_files_dir_str: firmware_files_dir,
                     firmware_blob_file_str: firmware_blob_file,
                 },
