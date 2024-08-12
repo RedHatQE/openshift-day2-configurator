@@ -1,3 +1,4 @@
+import shlex
 import logging
 from typing import Any, Dict, Union, Optional
 
@@ -7,6 +8,7 @@ from openshift_day2_configurator.utils.general import (
 )
 from rich.progress import Progress
 from timeout_sampler import TimeoutSampler
+from pyhelper_utils.shell import run_command
 from openshift_day2_configurator.utils.resources import create_ocp_resource
 from kubernetes.dynamic import DynamicClient
 from ocp_resources.machine_config import MachineConfig
@@ -43,8 +45,28 @@ def adding_extensions_to_rhcos_on_nodes_message(nodes_type: str) -> str:
     return f"Adding extensions to RHCOS on {nodes_type} nodes"
 
 
+def loading_custom_firmware_blobs_on_nodes_message(nodes_type: str) -> str:
+    return f"Loading custom firmware blobs in the machine config manifest for {nodes_type} nodes"
+
+
 def get_machine_config_pool(client: DynamicClient, nodes_type: str) -> MachineConfigPool:
     return [mcp for mcp in MachineConfigPool.get(dyn_client=client) if mcp.name == nodes_type][0]
+
+
+def generate_firmware_machine_config_file(
+    firmware_package_name: str,
+    firmware_files_dir: str,
+    butane_content: str,
+) -> str:
+    firmware_machine_config_file: str = f"{firmware_package_name}.yaml"
+
+    # TODO: check res/err if this will raise automatically?
+    res, _, err = run_command(
+        command=shlex.split(f"butane -o {firmware_machine_config_file} --files-dir {firmware_files_dir}"),
+        input=butane_content,
+    )
+
+    return firmware_machine_config_file
 
 
 def wait_for_machine_config_pool_to_update(
@@ -400,6 +422,66 @@ def adding_extensions_to_rhcos_on_nodes(
     return rhcos_extensions_task_dict
 
 
+def loading_custom_firmware_blobs_on_nodes(
+    client: DynamicClient,
+    logger: logging.Logger,
+    nodes_type: str,
+    firmware_files_dir: str,
+    firmware_blob_file: str,
+) -> Dict[str, Dict[str, Union[str, bool]]]:
+    logging.debug(loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type))
+
+    firmware_package_name: str = f"98-{nodes_type}-firmware-blob"
+    nodes_firmware_files_dir: str = "/var/lib/firmware"
+    butane_content: str = f"""
+    variant: openshift
+    version: 4.9.0
+    metadata:
+      labels:
+        {MACHINE_CONFIGURATION_ROLE_LABEL}: {nodes_type}
+      name: {firmware_package_name}
+    storage:
+      files:
+      - path: {nodes_firmware_files_dir}/{firmware_package_name}.bu
+        contents:
+          local: {firmware_blob_file}
+        mode: 0644
+    openshift:
+      kernel_arguments:
+      - 'firmware_class.path={nodes_firmware_files_dir}'
+    """
+
+    firmware_task_dict = {
+        loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type): create_ocp_resource(
+            MachineConfig(
+                client=client,
+                name=firmware_package_name,
+                yaml_file=generate_firmware_machine_config_file(
+                    firmware_package_name=firmware_package_name,
+                    firmware_files_dir=firmware_files_dir,
+                    butane_content=butane_content,
+                ),
+            ),
+            logger=logger,
+        )
+    }
+
+    if not (
+        firmware_updated_dict := wait_for_machine_config_pool_to_update(
+            client=client,
+            nodes_type=nodes_type,
+            machine_config_name=firmware_package_name,
+            node_operation_message=loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type),
+            error_message=f"Failed to load {firmware_package_name} custom firmware blob on {nodes_type} nodes",
+        )
+    )[loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type)]["res"]:
+        return firmware_updated_dict
+
+    logger.info(f"Loaded {firmware_package_name} custom firmware blob on {nodes_type} nodes successfully.")
+
+    return firmware_task_dict
+
+
 def execute_nodes_configuration(
     config: Dict[str, Any],
     logger: logging.Logger,
@@ -409,8 +491,14 @@ def execute_nodes_configuration(
     nodes_configurator_description: str = "Configure nodes using MachineConfig"
     logger.debug(nodes_configurator_description)
 
+    nodes_type_str: str = "nodes_type"
     cluster_domain_str: str = "cluster_domain"
+    firmware_files_dir_str: str = "firmware_files_dir"
+    firmware_blob_file_str = "firmware_blob_file"
+
     cluster_domain: Optional[str] = config.get(cluster_domain_str)
+    firmware_files_dir: Optional[str] = config.get(firmware_files_dir_str)
+    firmware_blob_file: Optional[str] = config.get(firmware_blob_file_str)
 
     return execute_configurator(
         verify_and_execute_kwargs={
@@ -438,28 +526,12 @@ def execute_nodes_configuration(
                     "nodes_type": WORKER_NODE_TYPE,
                 },
             },
-            adding_kernel_arguments_to_nodes_message(nodes_type=MASTER_NODE_TYPE): {
-                "func": adding_kernel_arguments_to_nodes,
-                "func_kwargs": {
-                    "client": client,
-                    "logger": logger,
-                    "nodes_type": MASTER_NODE_TYPE,
-                },
-            },
             adding_kernel_arguments_to_nodes_message(nodes_type=WORKER_NODE_TYPE): {
                 "func": adding_kernel_arguments_to_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
                     "nodes_type": WORKER_NODE_TYPE,
-                },
-            },
-            adding_realtime_kernel_to_nodes_message(nodes_type=MASTER_NODE_TYPE): {
-                "func": adding_realtime_kernel_to_nodes,
-                "func_kwargs": {
-                    "client": client,
-                    "logger": logger,
-                    "nodes_type": MASTER_NODE_TYPE,
                 },
             },
             adding_realtime_kernel_to_nodes_message(nodes_type=WORKER_NODE_TYPE): {
@@ -470,28 +542,12 @@ def execute_nodes_configuration(
                     "nodes_type": WORKER_NODE_TYPE,
                 },
             },
-            configure_journald_setting_on_nodes_message(nodes_type=MASTER_NODE_TYPE): {
-                "func": configure_journald_setting_on_nodes,
-                "func_kwargs": {
-                    "client": client,
-                    "logger": logger,
-                    "nodes_type": MASTER_NODE_TYPE,
-                },
-            },
             configure_journald_setting_on_nodes_message(nodes_type=WORKER_NODE_TYPE): {
                 "func": configure_journald_setting_on_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
                     "nodes_type": WORKER_NODE_TYPE,
-                },
-            },
-            configure_image_registry_setting_on_nodes_message(nodes_type=MASTER_NODE_TYPE): {
-                "func": configure_image_registry_setting_on_nodes,
-                "func_kwargs": {
-                    "client": client,
-                    "logger": logger,
-                    "nodes_type": MASTER_NODE_TYPE,
                 },
             },
             configure_image_registry_setting_on_nodes_message(nodes_type=WORKER_NODE_TYPE): {
@@ -502,20 +558,22 @@ def execute_nodes_configuration(
                     "nodes_type": WORKER_NODE_TYPE,
                 },
             },
-            adding_extensions_to_rhcos_on_nodes_message(nodes_type=MASTER_NODE_TYPE): {
-                "func": adding_extensions_to_rhcos_on_nodes,
-                "func_kwargs": {
-                    "client": client,
-                    "logger": logger,
-                    "nodes_type": MASTER_NODE_TYPE,
-                },
-            },
             adding_extensions_to_rhcos_on_nodes_message(nodes_type=WORKER_NODE_TYPE): {
                 "func": adding_extensions_to_rhcos_on_nodes,
                 "func_kwargs": {
                     "client": client,
                     "logger": logger,
                     "nodes_type": WORKER_NODE_TYPE,
+                },
+            },
+            loading_custom_firmware_blobs_on_nodes_message(nodes_type=WORKER_NODE_TYPE): {
+                "func": loading_custom_firmware_blobs_on_nodes,
+                "func_kwargs": {
+                    "client": client,
+                    "logger": logger,
+                    nodes_type_str: WORKER_NODE_TYPE,
+                    firmware_files_dir_str: firmware_files_dir,
+                    firmware_blob_file_str: firmware_blob_file,
                 },
             },
         },
