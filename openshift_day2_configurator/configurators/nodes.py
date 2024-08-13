@@ -1,4 +1,6 @@
 import shlex
+import shutil
+import os.path
 import logging
 from typing import Any, Dict, Union, Optional
 
@@ -116,7 +118,8 @@ def configure_chrony_ntp_on_nodes(
     cluster_domain: str,
     nodes_type: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    logger.debug(configure_chrony_ntp_on_nodes_message(nodes_type=nodes_type))
+    chrony_desc_message: str = configure_chrony_ntp_on_nodes_message(nodes_type=nodes_type)
+    logger.debug(chrony_desc_message)
 
     chrony_conf = f"""
     pool ntp.{cluster_domain} iburst driftfile /var/lib/chrony/drift makestep 1.0 3
@@ -127,7 +130,7 @@ def configure_chrony_ntp_on_nodes(
     machine_config_name = f"99-{nodes_type}s-chrony-configuration"
 
     chrony_ntp_task_dict = {
-        configure_chrony_ntp_on_nodes_message(nodes_type=nodes_type): create_ocp_resource(
+        chrony_desc_message: create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
                 name=machine_config_name,
@@ -164,10 +167,10 @@ def configure_chrony_ntp_on_nodes(
             client=client,
             nodes_type=nodes_type,
             machine_config_name=machine_config_name,
-            node_operation_message=configure_chrony_ntp_on_nodes_message(nodes_type=nodes_type),
+            node_operation_message=chrony_desc_message,
             error_message=f"Failed to Configure chrony NTP on {nodes_type} nodes",
         )
-    )[configure_chrony_ntp_on_nodes_message(nodes_type=nodes_type)]["res"]:
+    )[chrony_desc_message]["res"]:
         return chrony_updated_dict
 
     logger.info(f"Configured chrony NTP on {nodes_type} nodes successfully.")
@@ -180,14 +183,15 @@ def adding_kernel_arguments_to_nodes(
     logger: logging.Logger,
     nodes_type: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    logger.debug(adding_kernel_arguments_to_nodes_message(nodes_type=nodes_type))
+    kernel_argument_desc_message: str = adding_kernel_arguments_to_nodes_message(nodes_type=nodes_type)
+    logger.debug(kernel_argument_desc_message)
 
     new_kernel_argument = "enforcing=0"
 
     machine_config_name = f"05-{nodes_type}-kernelarg-selinuxpermissive"
 
     kernel_argument_task_dict = {
-        adding_kernel_arguments_to_nodes_message(nodes_type=nodes_type): create_ocp_resource(
+        kernel_argument_desc_message: create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
                 name=machine_config_name,
@@ -208,10 +212,10 @@ def adding_kernel_arguments_to_nodes(
             client=client,
             nodes_type=nodes_type,
             machine_config_name=machine_config_name,
-            node_operation_message=adding_kernel_arguments_to_nodes_message(nodes_type=nodes_type),
+            node_operation_message=kernel_argument_desc_message,
             error_message=f"Failed to add {new_kernel_argument} kernel argument to {nodes_type} nodes",
         )
-    )[adding_kernel_arguments_to_nodes_message(nodes_type=nodes_type)]["res"]:
+    )[kernel_argument_desc_message]["res"]:
         return kernel_args_updated_dict
 
     logger.info(f"Added {new_kernel_argument} kernel argument to {nodes_type} nodes successfully.")
@@ -224,14 +228,15 @@ def adding_realtime_kernel_to_nodes(
     logger: logging.Logger,
     nodes_type: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    logger.debug(adding_realtime_kernel_to_nodes_message(nodes_type=nodes_type))
+    realtime_kernel_desc_message: str = adding_realtime_kernel_to_nodes_message(nodes_type=nodes_type)
+    logger.debug(realtime_kernel_desc_message)
 
     realtime_str = "realtime"
 
     machine_config_name = f"99-{nodes_type}-{realtime_str}"
 
     realtime_kernel_task_dict = {
-        adding_realtime_kernel_to_nodes_message(nodes_type=nodes_type): create_ocp_resource(
+        realtime_kernel_desc_message: create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
                 name=machine_config_name,
@@ -247,10 +252,10 @@ def adding_realtime_kernel_to_nodes(
             client=client,
             nodes_type=nodes_type,
             machine_config_name=machine_config_name,
-            node_operation_message=adding_realtime_kernel_to_nodes_message(nodes_type=nodes_type),
+            node_operation_message=realtime_kernel_desc_message,
             error_message=f"Failed to add {realtime_str} kernel to {nodes_type} nodes",
         )
-    )[adding_realtime_kernel_to_nodes_message(nodes_type=nodes_type)]["res"]:
+    )[realtime_kernel_desc_message]["res"]:
         return realtime_kernel_updated_dict
 
     logger.info(f"Added {realtime_str} kernel to {nodes_type} nodes successfully.")
@@ -263,7 +268,8 @@ def configure_journald_setting_on_nodes(
     logger: logging.Logger,
     nodes_type: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    logger.debug(configure_journald_setting_on_nodes_message(nodes_type=nodes_type))
+    journald_desc_message: str = configure_journald_setting_on_nodes_message(nodes_type=nodes_type)
+    logger.debug(journald_desc_message)
 
     journald_conf = """
     # Disable rate limiting
@@ -277,7 +283,7 @@ def configure_journald_setting_on_nodes(
     machine_config_name = f"40-{nodes_type}-custom-journald"
 
     journald_task_dict = {
-        configure_journald_setting_on_nodes_message(nodes_type=nodes_type): create_ocp_resource(
+        journald_desc_message: create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
                 name=machine_config_name,
@@ -315,10 +321,10 @@ def configure_journald_setting_on_nodes(
             client=client,
             nodes_type=nodes_type,
             machine_config_name=machine_config_name,
-            node_operation_message=configure_journald_setting_on_nodes_message(nodes_type=nodes_type),
+            node_operation_message=journald_desc_message,
             error_message=f"Failed to configure journald setting on {nodes_type} nodes",
         )
-    )[configure_journald_setting_on_nodes_message(nodes_type=nodes_type)]["res"]:
+    )[journald_desc_message]["res"]:
         return journald_updated_dict
 
     logger.info(f"Configured journald setting on {nodes_type} nodes successfully.")
@@ -331,7 +337,8 @@ def configure_image_registry_setting_on_nodes(
     logger: logging.Logger,
     nodes_type: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    logger.debug(configure_image_registry_setting_on_nodes_message(nodes_type=nodes_type))
+    image_registries_desc_message: str = configure_image_registry_setting_on_nodes_message(nodes_type=nodes_type)
+    logger.debug(image_registries_desc_message)
 
     registries_conf = """
     unqualified-search-registries = ['registry.access.redhat.com', 'docker.io', 'quay.io']
@@ -339,7 +346,7 @@ def configure_image_registry_setting_on_nodes(
     search_registries_machine_config_name = f"99-{nodes_type}-unqualified-search-registries"
 
     image_registries_task_dict = {
-        configure_image_registry_setting_on_nodes_message(nodes_type=nodes_type): create_ocp_resource(
+        image_registries_desc_message: create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
                 name=search_registries_machine_config_name,
@@ -371,10 +378,10 @@ def configure_image_registry_setting_on_nodes(
             client=client,
             nodes_type=nodes_type,
             machine_config_name=search_registries_machine_config_name,
-            node_operation_message=configure_image_registry_setting_on_nodes_message(nodes_type=nodes_type),
+            node_operation_message=image_registries_desc_message,
             error_message=f"Failed to configure images registry setting on {nodes_type} nodes",
         )
-    )[configure_image_registry_setting_on_nodes_message(nodes_type=nodes_type)]["res"]:
+    )[image_registries_desc_message]["res"]:
         return image_registries_updated_dict
 
     logger.info(f"Configured image registry setting on {nodes_type} nodes successfully.")
@@ -387,13 +394,14 @@ def adding_extensions_to_rhcos_on_nodes(
     logger: logging.Logger,
     nodes_type: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    logger.debug(adding_extensions_to_rhcos_on_nodes_message(nodes_type=nodes_type))
+    rhcos_extensions_dec_message: str = adding_extensions_to_rhcos_on_nodes_message(nodes_type=nodes_type)
+    logger.debug(rhcos_extensions_dec_message)
 
     rhcos_extension_name: str = "usbguard"
 
     machine_config_name = f"80-{nodes_type}-extensions"
     rhcos_extensions_task_dict = {
-        adding_extensions_to_rhcos_on_nodes_message(nodes_type=nodes_type): create_ocp_resource(
+        rhcos_extensions_dec_message: create_ocp_resource(
             ocp_resource=MachineConfig(
                 client=client,
                 name=machine_config_name,
@@ -410,10 +418,10 @@ def adding_extensions_to_rhcos_on_nodes(
             client=client,
             nodes_type=nodes_type,
             machine_config_name=machine_config_name,
-            node_operation_message=adding_extensions_to_rhcos_on_nodes_message(nodes_type=nodes_type),
+            node_operation_message=rhcos_extensions_dec_message,
             error_message=f"Failed to add {rhcos_extension_name} extension to rhcos on {nodes_type} nodes",
         )
-    )[adding_extensions_to_rhcos_on_nodes_message(nodes_type=nodes_type)]["res"]:
+    )[rhcos_extensions_dec_message]["res"]:
         return rhcos_extensions_updated_dict
 
     logger.info(f"Added {rhcos_extension_name} extension to rhcos on {nodes_type} nodes successfully.")
@@ -428,10 +436,22 @@ def loading_custom_firmware_blobs_on_nodes(
     firmware_files_dir: str,
     firmware_blob_file: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    logging.debug(loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type))
+    def assert_butane_params_valid() -> None:
+        assert os.path.exists(
+            f"{firmware_files_dir}/{firmware_blob_file}"
+        ), f"Given firmware blob file {firmware_blob_file} does not exist under {firmware_files_dir} directory."
+
+        assert shutil.which("butane") is not None, "Butane CLI is not installed."
+
+    firmware_desc_message: str = loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type)
+    logger.debug(firmware_desc_message)
+
+    assert_butane_params_valid()
 
     firmware_package_name: str = f"98-{nodes_type}-firmware-blob"
     nodes_firmware_files_dir: str = "/var/lib/firmware"
+    firmware_error_message: str = f"Failed to load {firmware_package_name} custom firmware blob on {nodes_type} nodes"
+
     butane_content: str = f"""
     variant: openshift
     version: 4.9.0
@@ -450,16 +470,26 @@ def loading_custom_firmware_blobs_on_nodes(
       - 'firmware_class.path={nodes_firmware_files_dir}'
     """
 
+    try:
+        firmware_machine_config_yaml = generate_firmware_machine_config_file(
+            firmware_package_name=firmware_package_name,
+            firmware_files_dir=firmware_files_dir,
+            butane_content=butane_content,
+        )
+    except Exception as ex:
+        return {
+            firmware_desc_message: {
+                "res": False,
+                "err": f"{firmware_error_message}: {ex}",
+            }
+        }
+
     firmware_task_dict = {
-        loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type): create_ocp_resource(
+        firmware_desc_message: create_ocp_resource(
             MachineConfig(
                 client=client,
                 name=firmware_package_name,
-                yaml_file=generate_firmware_machine_config_file(
-                    firmware_package_name=firmware_package_name,
-                    firmware_files_dir=firmware_files_dir,
-                    butane_content=butane_content,
-                ),
+                yaml_file=firmware_machine_config_yaml,
             ),
             logger=logger,
         )
@@ -470,10 +500,10 @@ def loading_custom_firmware_blobs_on_nodes(
             client=client,
             nodes_type=nodes_type,
             machine_config_name=firmware_package_name,
-            node_operation_message=loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type),
+            node_operation_message=firmware_desc_message,
             error_message=f"Failed to load {firmware_package_name} custom firmware blob on {nodes_type} nodes",
         )
-    )[loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type)]["res"]:
+    )[firmware_desc_message]["res"]:
         return firmware_updated_dict
 
     logger.info(f"Loaded {firmware_package_name} custom firmware blob on {nodes_type} nodes successfully.")
