@@ -15,12 +15,13 @@ from openshift_day2_configurator.utils.resources import create_ocp_resource
 from kubernetes.dynamic import DynamicClient
 from ocp_resources.machine_config import MachineConfig
 from ocp_resources.machine_config_pool import MachineConfigPool
+from ocp_resources.node import Node
 
 MACHINE_CONFIGURATION_ROLE_LABEL: str = "machineconfiguration.openshift.io/role"
 IGNITION_VERSION: str = "3.1.0"
 MASTER_NODE_TYPE: str = "master"
 WORKER_NODE_TYPE: str = "worker"
-TIMEOUT_30MIN: int = 30 * 60
+NODE_TIMEOUT_7MIN: int = 7 * 60
 
 
 def configure_chrony_ntp_on_nodes_message(nodes_type: str) -> str:
@@ -55,6 +56,14 @@ def get_machine_config_pool(client: DynamicClient, nodes_type: str) -> MachineCo
     return [mcp for mcp in MachineConfigPool.get(dyn_client=client) if mcp.name == nodes_type][0]
 
 
+def get_number_of_nodes(client: DynamicClient, nodes_type: str) -> int:
+    return len([
+        node
+        for node in Node.get(dyn_client=client)
+        if f"node-role.kubernetes.io/{nodes_type}" in node.instance.to_dict().get("metadata", {}).get("labels", {})
+    ])
+
+
 def generate_firmware_machine_config_file(
     firmware_package_name: str,
     firmware_files_dir: str,
@@ -77,9 +86,11 @@ def wait_for_machine_config_pool_to_update(
     error_message: str,
     machine_config_name: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
+    number_of_nodes = get_number_of_nodes(client=client, nodes_type=nodes_type)
+
     try:
         for mcp_sample in TimeoutSampler(
-            wait_timeout=TIMEOUT_30MIN,
+            wait_timeout=NODE_TIMEOUT_7MIN * number_of_nodes,
             sleep=10,
             func=get_machine_config_pool,
             client=client,
@@ -92,7 +103,7 @@ def wait_for_machine_config_pool_to_update(
                 mcp_sample.wait_for_condition(
                     condition=MachineConfigPool.Status.UPDATED,
                     status=MachineConfigPool.Condition.Status.TRUE,
-                    timeout=TIMEOUT_30MIN,
+                    timeout=NODE_TIMEOUT_7MIN * number_of_nodes,
                 )
                 break
 
@@ -543,15 +554,6 @@ def execute_nodes_configuration(
                     "logger": logger,
                     cluster_domain_str: cluster_domain,
                     "nodes_type": MASTER_NODE_TYPE,
-                },
-            },
-            configure_chrony_ntp_on_nodes_message(nodes_type=WORKER_NODE_TYPE): {
-                "func": configure_chrony_ntp_on_nodes,
-                "func_kwargs": {
-                    "client": client,
-                    "logger": logger,
-                    cluster_domain_str: cluster_domain,
-                    "nodes_type": WORKER_NODE_TYPE,
                 },
             },
             adding_kernel_arguments_to_nodes_message(nodes_type=WORKER_NODE_TYPE): {

@@ -24,3 +24,5 @@ configurators:
 
     nodes:
         cluster_domain: <ocp.customer.domain.com>
+        firmware_files_dir: <firmware-local-dir>
+        firmware_blob_file: <firmware-local-blob-file>
