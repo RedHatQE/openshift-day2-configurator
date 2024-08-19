@@ -13,7 +13,7 @@ def table():
 
 @pytest.fixture
 def day2_configurators(valid_setup):
-    _, day2_configurators, _ = get_day2_configs(config_file=valid_setup)
+    _, day2_configurators, _, _ = get_day2_configs(config_file=valid_setup)
     yield day2_configurators
 
 
@@ -23,6 +23,7 @@ def test_execute_configurators_non_valid_configurator(day2_configurators, table,
         table=table,
         logger=logging.getLogger(name="test-execute-configurators"),
         client=mocked_client,
+        cluster_domain="",
     )
     assert [col.header for col in res.columns] == [
         "Configurator",

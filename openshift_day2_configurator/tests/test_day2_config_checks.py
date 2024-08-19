@@ -90,10 +90,11 @@ def test_day2_config_failed_client(day2_valid_config):
 
 
 def test_day2_config_success(valid_setup):
-    config, configurators, client = get_day2_configs(config_file=valid_setup)
+    config, configurators, client, cluster_domain = get_day2_configs(config_file=valid_setup)
     assert config
     assert configurators
     assert client
+    assert cluster_domain
 
 
 def test_verify_and_set_kubeconfig_and_valid_client(valid_setup_dict):
