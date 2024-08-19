@@ -58,9 +58,7 @@ def get_machine_config_pool(client: DynamicClient, nodes_type: str) -> MachineCo
 
 def get_number_of_nodes(client: DynamicClient, nodes_type: str) -> int:
     return len([
-        node
-        for node in Node.get(dyn_client=client)
-        if f"node-role.kubernetes.io/{nodes_type}" in node.instance.to_dict().get("metadata", {}).get("labels", {})
+        node for node in Node.get(dyn_client=client) if f"node-role.kubernetes.io/{nodes_type}" in node.labels.keys()
     ])
 
 
@@ -86,11 +84,11 @@ def wait_for_machine_config_pool_to_update(
     error_message: str,
     machine_config_name: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    number_of_nodes = get_number_of_nodes(client=client, nodes_type=nodes_type)
+    nodes_timeout = NODE_TIMEOUT_7MIN * get_number_of_nodes(client=client, nodes_type=nodes_type)
 
     try:
         for mcp_sample in TimeoutSampler(
-            wait_timeout=NODE_TIMEOUT_7MIN * number_of_nodes,
+            wait_timeout=nodes_timeout,
             sleep=10,
             func=get_machine_config_pool,
             client=client,
@@ -103,9 +101,14 @@ def wait_for_machine_config_pool_to_update(
                 mcp_sample.wait_for_condition(
                     condition=MachineConfigPool.Status.UPDATED,
                     status=MachineConfigPool.Condition.Status.TRUE,
-                    timeout=NODE_TIMEOUT_7MIN * number_of_nodes,
+                    timeout=nodes_timeout,
                 )
-                break
+                return {
+                    node_operation_message: {
+                        "res": True,
+                        "err": "",
+                    }
+                }
 
     except Exception as ex:
         return {
@@ -117,8 +120,8 @@ def wait_for_machine_config_pool_to_update(
 
     return {
         node_operation_message: {
-            "res": True,
-            "err": "",
+            "res": False,
+            "err": error_message,
         }
     }
 
@@ -173,20 +176,19 @@ def configure_chrony_ntp_on_nodes(
         )
     }
 
-    if not (
-        chrony_updated_dict := wait_for_machine_config_pool_to_update(
-            client=client,
-            nodes_type=nodes_type,
-            machine_config_name=machine_config_name,
-            node_operation_message=chrony_desc_message,
-            error_message=f"Failed to Configure chrony NTP on {nodes_type} nodes",
-        )
-    )[chrony_desc_message]["res"]:
-        return chrony_updated_dict
+    chrony_updated_dict = wait_for_machine_config_pool_to_update(
+        client=client,
+        nodes_type=nodes_type,
+        machine_config_name=machine_config_name,
+        node_operation_message=chrony_desc_message,
+        error_message=f"Failed to Configure chrony NTP on {nodes_type} nodes",
+    )
 
-    logger.info(f"Configured chrony NTP on {nodes_type} nodes successfully.")
+    if chrony_updated_dict[chrony_desc_message]["res"]:
+        logger.info(f"Configured chrony NTP on {nodes_type} nodes successfully.")
+        return chrony_ntp_task_dict
 
-    return chrony_ntp_task_dict
+    return chrony_updated_dict
 
 
 def adding_kernel_arguments_to_nodes(
@@ -447,17 +449,23 @@ def loading_custom_firmware_blobs_on_nodes(
     firmware_files_dir: str,
     firmware_blob_file: str,
 ) -> Dict[str, Dict[str, Union[str, bool]]]:
-    def assert_butane_params_valid() -> None:
-        assert os.path.exists(
-            f"{firmware_files_dir}/{firmware_blob_file}"
-        ), f"Given firmware blob file {firmware_blob_file} does not exist under {firmware_files_dir} directory."
-
-        assert shutil.which("butane") is not None, "Butane CLI is not installed."
-
     firmware_desc_message: str = loading_custom_firmware_blobs_on_nodes_message(nodes_type=nodes_type)
     logger.debug(firmware_desc_message)
 
-    assert_butane_params_valid()
+    firmware_requirements_err_list = []
+
+    if not os.path.exists(f"{firmware_files_dir}/{firmware_blob_file}"):
+        (
+            firmware_requirements_err_list.append(
+                f"Given firmware blob file {firmware_blob_file} does not exist under {firmware_files_dir} directory."
+            )
+        )
+
+    if shutil.which("butane") is None:
+        firmware_requirements_err_list.append("Butane CLI is not installed.")
+
+    if firmware_requirements_err_list:
+        return {firmware_desc_message: {"res": False, "err": "\n".join(firmware_requirements_err_list)}}
 
     firmware_package_name: str = f"98-{nodes_type}-firmware-blob"
     nodes_firmware_files_dir: str = "/var/lib/firmware"

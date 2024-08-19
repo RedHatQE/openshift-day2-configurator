@@ -1,5 +1,6 @@
 kubeconfig: !ENV "${HOME}/kubeconfig"
 output_log_file: /tmp/openshift-day2-configuration.log
+cluster_domain: <ocp.customer.domain.com>
 
 configurators:
     ldap:
@@ -18,11 +19,9 @@ configurators:
         sealed_sync_secret_encrypted_data: "xxxxx"  # pragma: allowlist secret`
 
     ingress:
-        cluster_domain: <ocp.customer.domain.com>
         ca_pem_file_path: </path/to/ca.pem>
         ca_key_file_path: </path/to/ca.key>
 
     nodes:
-        cluster_domain: <ocp.customer.domain.com>
-        firmware_files_dir: <firmware-local-dir>
+        firmware_files_dir: <firmware-local-dir>  # e.g. /var/lib/firmware
         firmware_blob_file: <firmware-local-blob-file>
