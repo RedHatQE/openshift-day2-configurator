@@ -7,6 +7,8 @@ The OpenShift Day-2 Configuration Tool is a tool to configure Day-2 environment 
 - Ingress
 - Nodes
 
+*ETCD, MachineConfig operator and Infra/Worker nodes tasks configurators are to be added in the future.*
+
 ## How to use
 
 ### Setup
