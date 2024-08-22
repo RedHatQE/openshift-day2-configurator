@@ -176,20 +176,19 @@ def configure_chrony_ntp_on_nodes(
         )
     }
 
-    if not (
-        chrony_updated_dict := wait_for_machine_config_pool_to_update(
-            client=client,
-            nodes_type=nodes_type,
-            machine_config_name=machine_config_name,
-            node_operation_message=chrony_desc_message,
-            error_message=f"Failed to Configure chrony NTP on {nodes_type} nodes",
-        )
-    )[chrony_desc_message]["res"]:
-        return chrony_updated_dict
+    chrony_updated_dict = wait_for_machine_config_pool_to_update(
+        client=client,
+        nodes_type=nodes_type,
+        machine_config_name=machine_config_name,
+        node_operation_message=chrony_desc_message,
+        error_message=f"Failed to Configure chrony NTP on {nodes_type} nodes",
+    )
 
-    logger.info(f"Configured chrony NTP on {nodes_type} nodes successfully.")
+    if chrony_updated_dict[chrony_desc_message]["res"]:
+        logger.info(f"Configured chrony NTP on {nodes_type} nodes successfully.")
+        return chrony_ntp_task_dict
 
-    return chrony_ntp_task_dict
+    return chrony_updated_dict
 
 
 def adding_kernel_arguments_to_nodes(
@@ -221,20 +220,19 @@ def adding_kernel_arguments_to_nodes(
         )
     }
 
-    if not (
-        kernel_args_updated_dict := wait_for_machine_config_pool_to_update(
-            client=client,
-            nodes_type=nodes_type,
-            machine_config_name=machine_config_name,
-            node_operation_message=kernel_argument_desc_message,
-            error_message=f"Failed to add {new_kernel_argument} kernel argument to {nodes_type} nodes",
-        )
-    )[kernel_argument_desc_message]["res"]:
-        return kernel_args_updated_dict
+    kernel_args_updated_dict = wait_for_machine_config_pool_to_update(
+        client=client,
+        nodes_type=nodes_type,
+        machine_config_name=machine_config_name,
+        node_operation_message=kernel_argument_desc_message,
+        error_message=f"Failed to add {new_kernel_argument} kernel argument to {nodes_type} nodes",
+    )
 
-    logger.info(f"Added {new_kernel_argument} kernel argument to {nodes_type} nodes successfully.")
+    if kernel_args_updated_dict[kernel_argument_desc_message]["res"]:
+        logger.info(f"Added {new_kernel_argument} kernel argument to {nodes_type} nodes successfully.")
+        return kernel_argument_task_dict
 
-    return kernel_argument_task_dict
+    return kernel_args_updated_dict
 
 
 def adding_realtime_kernel_to_nodes(
@@ -261,20 +259,19 @@ def adding_realtime_kernel_to_nodes(
         )
     }
 
-    if not (
-        realtime_kernel_updated_dict := wait_for_machine_config_pool_to_update(
-            client=client,
-            nodes_type=nodes_type,
-            machine_config_name=machine_config_name,
-            node_operation_message=realtime_kernel_desc_message,
-            error_message=f"Failed to add {realtime_str} kernel to {nodes_type} nodes",
-        )
-    )[realtime_kernel_desc_message]["res"]:
-        return realtime_kernel_updated_dict
+    realtime_kernel_updated_dict = wait_for_machine_config_pool_to_update(
+        client=client,
+        nodes_type=nodes_type,
+        machine_config_name=machine_config_name,
+        node_operation_message=realtime_kernel_desc_message,
+        error_message=f"Failed to add {realtime_str} kernel to {nodes_type} nodes",
+    )
 
-    logger.info(f"Added {realtime_str} kernel to {nodes_type} nodes successfully.")
+    if realtime_kernel_updated_dict[realtime_kernel_desc_message]["res"]:
+        logger.info(f"Added {realtime_str} kernel to {nodes_type} nodes successfully.")
+        return realtime_kernel_task_dict
 
-    return realtime_kernel_task_dict
+    return realtime_kernel_updated_dict
 
 
 def configure_journald_setting_on_nodes(
@@ -330,20 +327,19 @@ def configure_journald_setting_on_nodes(
         )
     }
 
-    if not (
-        journald_updated_dict := wait_for_machine_config_pool_to_update(
-            client=client,
-            nodes_type=nodes_type,
-            machine_config_name=machine_config_name,
-            node_operation_message=journald_desc_message,
-            error_message=f"Failed to configure journald setting on {nodes_type} nodes",
-        )
-    )[journald_desc_message]["res"]:
-        return journald_updated_dict
+    journald_updated_dict = wait_for_machine_config_pool_to_update(
+        client=client,
+        nodes_type=nodes_type,
+        machine_config_name=machine_config_name,
+        node_operation_message=journald_desc_message,
+        error_message=f"Failed to configure journald setting on {nodes_type} nodes",
+    )
 
-    logger.info(f"Configured journald setting on {nodes_type} nodes successfully.")
+    if journald_updated_dict[journald_desc_message]["res"]:
+        logger.info(f"Configured journald setting on {nodes_type} nodes successfully.")
+        return journald_task_dict
 
-    return journald_task_dict
+    return journald_updated_dict
 
 
 def configure_image_registry_setting_on_nodes(
@@ -387,20 +383,19 @@ def configure_image_registry_setting_on_nodes(
         )
     }
 
-    if not (
-        image_registries_updated_dict := wait_for_machine_config_pool_to_update(
-            client=client,
-            nodes_type=nodes_type,
-            machine_config_name=search_registries_machine_config_name,
-            node_operation_message=image_registries_desc_message,
-            error_message=f"Failed to configure images registry setting on {nodes_type} nodes",
-        )
-    )[image_registries_desc_message]["res"]:
-        return image_registries_updated_dict
+    image_registries_updated_dict = wait_for_machine_config_pool_to_update(
+        client=client,
+        nodes_type=nodes_type,
+        machine_config_name=search_registries_machine_config_name,
+        node_operation_message=image_registries_desc_message,
+        error_message=f"Failed to configure images registry setting on {nodes_type} nodes",
+    )
 
-    logger.info(f"Configured image registry setting on {nodes_type} nodes successfully.")
+    if image_registries_updated_dict[image_registries_desc_message]["res"]:
+        logger.info(f"Configured image registry setting on {nodes_type} nodes successfully.")
+        return image_registries_task_dict
 
-    return image_registries_task_dict
+    return image_registries_updated_dict
 
 
 def adding_extensions_to_rhcos_on_nodes(
@@ -427,20 +422,19 @@ def adding_extensions_to_rhcos_on_nodes(
         )
     }
 
-    if not (
-        rhcos_extensions_updated_dict := wait_for_machine_config_pool_to_update(
-            client=client,
-            nodes_type=nodes_type,
-            machine_config_name=machine_config_name,
-            node_operation_message=rhcos_extensions_dec_message,
-            error_message=f"Failed to add {rhcos_extension_name} extension to rhcos on {nodes_type} nodes",
-        )
-    )[rhcos_extensions_dec_message]["res"]:
-        return rhcos_extensions_updated_dict
+    rhcos_extensions_updated_dict = wait_for_machine_config_pool_to_update(
+        client=client,
+        nodes_type=nodes_type,
+        machine_config_name=machine_config_name,
+        node_operation_message=rhcos_extensions_dec_message,
+        error_message=f"Failed to add {rhcos_extension_name} extension to rhcos on {nodes_type} nodes",
+    )
 
-    logger.info(f"Added {rhcos_extension_name} extension to rhcos on {nodes_type} nodes successfully.")
+    if rhcos_extensions_updated_dict[rhcos_extensions_dec_message]["res"]:
+        logger.info(f"Added {rhcos_extension_name} extension to rhcos on {nodes_type} nodes successfully.")
+        return rhcos_extensions_task_dict
 
-    return rhcos_extensions_task_dict
+    return rhcos_extensions_updated_dict
 
 
 def loading_custom_firmware_blobs_on_nodes(
@@ -515,20 +509,19 @@ def loading_custom_firmware_blobs_on_nodes(
         )
     }
 
-    if not (
-        firmware_updated_dict := wait_for_machine_config_pool_to_update(
-            client=client,
-            nodes_type=nodes_type,
-            machine_config_name=firmware_package_name,
-            node_operation_message=firmware_desc_message,
-            error_message=f"Failed to load {firmware_package_name} custom firmware blob on {nodes_type} nodes",
-        )
-    )[firmware_desc_message]["res"]:
-        return firmware_updated_dict
+    firmware_updated_dict = wait_for_machine_config_pool_to_update(
+        client=client,
+        nodes_type=nodes_type,
+        machine_config_name=firmware_package_name,
+        node_operation_message=firmware_desc_message,
+        error_message=f"Failed to load {firmware_package_name} custom firmware blob on {nodes_type} nodes",
+    )
 
-    logger.info(f"Loaded {firmware_package_name} custom firmware blob on {nodes_type} nodes successfully.")
+    if firmware_updated_dict[firmware_desc_message]["res"]:
+        logger.info(f"Loaded {firmware_package_name} custom firmware blob on {nodes_type} nodes successfully.")
+        return firmware_task_dict
 
-    return firmware_task_dict
+    return firmware_updated_dict
 
 
 def execute_nodes_configuration(
