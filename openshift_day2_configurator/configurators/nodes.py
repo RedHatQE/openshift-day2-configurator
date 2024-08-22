@@ -176,19 +176,20 @@ def configure_chrony_ntp_on_nodes(
         )
     }
 
-    chrony_updated_dict = wait_for_machine_config_pool_to_update(
-        client=client,
-        nodes_type=nodes_type,
-        machine_config_name=machine_config_name,
-        node_operation_message=chrony_desc_message,
-        error_message=f"Failed to Configure chrony NTP on {nodes_type} nodes",
-    )
+    if not (
+        chrony_updated_dict := wait_for_machine_config_pool_to_update(
+            client=client,
+            nodes_type=nodes_type,
+            machine_config_name=machine_config_name,
+            node_operation_message=chrony_desc_message,
+            error_message=f"Failed to Configure chrony NTP on {nodes_type} nodes",
+        )
+    )[chrony_desc_message]["res"]:
+        return chrony_updated_dict
 
-    if chrony_updated_dict[chrony_desc_message]["res"]:
-        logger.info(f"Configured chrony NTP on {nodes_type} nodes successfully.")
-        return chrony_ntp_task_dict
+    logger.info(f"Configured chrony NTP on {nodes_type} nodes successfully.")
 
-    return chrony_updated_dict
+    return chrony_ntp_task_dict
 
 
 def adding_kernel_arguments_to_nodes(
