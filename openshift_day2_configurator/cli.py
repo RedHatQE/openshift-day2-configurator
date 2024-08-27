@@ -23,13 +23,14 @@ def openshift_day2_configurator_executor(config_file: str, pdb: bool, verbose: b
         logging.disable(logging.CRITICAL)
 
     _base_table = base_table()
-    day2_config, day2_configurators, client = get_day2_configs(config_file=config_file)
+    day2_config, day2_configurators, client, cluster_domain = get_day2_configs(config_file=config_file)
 
     execute_configurators_kwargs = {
         "day2_configurators": day2_configurators,
         "table": _base_table,
         "logger": logger,
         "client": client,
+        "cluster_domain": cluster_domain,
     }
 
     if pdb or verbose:

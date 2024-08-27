@@ -14,6 +14,7 @@ def execute_configurators(
     table: Table,
     logger: logging.Logger,
     client: DynamicClient,
+    cluster_domain: str,
     progress: Progress | None = None,
     task_progress: int | None = None,
 ) -> Table:
@@ -37,6 +38,9 @@ def execute_configurators(
                 "Missing configurator mapping in configuration file",
             )
             continue
+
+        if configurator_name in ["ingress", "nodes"]:
+            config.update({"cluster_domain": cluster_domain})
 
         for result_str, result_status in _configurators_mappings[configurator_name](
             config=config, logger=logger, progress=progress, client=client

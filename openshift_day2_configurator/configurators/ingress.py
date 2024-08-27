@@ -21,7 +21,7 @@ from ocp_resources.proxy import Proxy
 
 from openshift_day2_configurator.utils.general import (
     execute_configurator,
-    certificate_b64encode,
+    str_b64encode,
 )
 from rich.progress import Progress
 from openshift_day2_configurator.utils.resources import create_ocp_resource
@@ -191,7 +191,7 @@ def create_new_ingress_certificate(
         generate_ingress_certificate_file(cluster_domain=cluster_domain, csr=csr, ca_cert=ca_cert, ca_key=ca_key)
 
     except Exception as ex:
-        logger.error("Failed to create Ingress certificate file: {ex}")
+        logger.error(f"Failed to create Ingress certificate file: {ex}")
         return {CREATE_NEW_INGRESS_CERTIFICATE: {"res": False, "err": str(ex)}}
 
     return {CREATE_NEW_INGRESS_CERTIFICATE: {"res": True, "err": ""}}
@@ -275,8 +275,8 @@ def create_wildcard_certificate_tls_secret(
                 name=f"wildcard.{cluster_domain}",
                 namespace=OPENSHIFT_INGRESS_NAMESPACE,
                 data_dict={
-                    "tls.crt": certificate_b64encode(certificate=ingress_certificate),
-                    "tls.key": certificate_b64encode(certificate=ingress_certificate_key),
+                    "tls.crt": str_b64encode(str_to_encode=ingress_certificate),
+                    "tls.key": str_b64encode(str_to_encode=ingress_certificate_key),
                 },
                 type="kubernetes.io/tls",
             ),
