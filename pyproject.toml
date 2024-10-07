@@ -2,7 +2,8 @@
 omit = [
   "openshift_day2_configurator/cli.py",
   "openshift_day2_configurator/tests/*",
-  "openshift_day2_configurator/configurators/ingress.py"
+  "openshift_day2_configurator/configurators/ingress.py",
+  "openshift_day2_configurator/configurators/nodes.py"
 ]
 
 [tool.coverage.report]
@@ -57,7 +58,7 @@ rich = "^13.7.1"
 click = "^8.1.7"
 openshift-python-wrapper = "^10.0.30"
 openshift-python-utilities = "^5.0.35"
-pyhelper-utils = "^0.0.37"
+pyhelper-utils = "^0.0.42"
 
 
 [tool.poetry.group.dev.dependencies]

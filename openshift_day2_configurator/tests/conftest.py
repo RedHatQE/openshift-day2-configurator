@@ -16,6 +16,7 @@ def day2_valid_config(tmp_path):
                 "configurators": {"configurator": "exec_configurator"},
                 "kubeconfig": kubeconfig_path,
                 "output_log_file": output_file_path,
+                "cluster_domain": "ocp.customer.domain.com",
             })
         )
 

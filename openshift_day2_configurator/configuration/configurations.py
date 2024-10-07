@@ -11,7 +11,7 @@ import rich
 PRINT_ERROR_PREFIX: str = "[red]ERROR:[not red]"
 
 
-def get_day2_configs(config_file: str) -> Tuple[Dict[str, Any], Dict[str, Any], DynamicClient]:
+def get_day2_configs(config_file: str) -> Tuple[Dict[str, Any], Dict[str, Any], DynamicClient, str]:
     day2_config = parse_config(config_file)
 
     if not (day2_configurators := day2_config.get("configurators")):
@@ -20,7 +20,9 @@ def get_day2_configs(config_file: str) -> Tuple[Dict[str, Any], Dict[str, Any], 
 
     client = verify_and_set_kubeconfig_and_client(config=day2_config)
 
-    return day2_config, day2_configurators, client
+    cluster_domain = day2_config.get("cluster_domain")
+
+    return day2_config, day2_configurators, client, cluster_domain
 
 
 def verify_and_set_kubeconfig_and_client(config: Dict[str, Any]) -> DynamicClient:
