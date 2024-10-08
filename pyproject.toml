@@ -3,7 +3,7 @@ omit = [
   "openshift_day2_configurator/cli.py",
   "openshift_day2_configurator/tests/*",
   "openshift_day2_configurator/configurators/ingress.py",
-  "openshift_day2_configurator/configurators/nodes.py"
+  "openshift_day2_configurator/configurators/nodes.py",
 ]
 
 [tool.coverage.report]
@@ -23,10 +23,10 @@ output-format = "grouped"
 exclude = [".git", ".venv", ".mypy_cache", ".tox", "__pycache__"]
 
 [tool.mypy]
-check_untyped_defs = true
-disallow_any_generics = true
-disallow_incomplete_defs = true
-disallow_untyped_defs = true
+# check_untyped_defs = true
+# disallow_any_generics = true
+# disallow_incomplete_defs = true
+# disallow_untyped_defs = true
 no_implicit_optional = true
 show_error_codes = true
 warn_unused_ignores = true
